@@ -15,11 +15,17 @@ if (!isset($_SESSION['user'])) {
         .webcam-container {
             max-width: 640px;
             margin: 0 auto;
+            position: relative;
         }
-        #webcam, #canvas {
+        #webcam, #canvas, #previewCanvas {
             width: 100%;
             max-width: 640px;
             margin-bottom: 1rem;
+        }
+        #previewCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
         }
         .editor-container {
             display: grid;
@@ -28,6 +34,13 @@ if (!isset($_SESSION['user'])) {
         }
         .sticker.selected {
             border: 2px solid blue;
+        }
+        .sticker {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .sticker:hover {
+            transform: scale(1.1);
         }
     </style>
 </head>
@@ -38,7 +51,8 @@ if (!isset($_SESSION['user'])) {
         <div class="editor-container">
             <div class="webcam-container">
                 <video id="webcam" autoplay playsinline></video>
-                <canvas id="canvas"></canvas>
+                <canvas id="previewCanvas"></canvas>
+                <canvas id="canvas" style="display: none;"></canvas>
                 <div class="button-group">
                     <button id="startCamera" class="btn">Start Camera</button>
                     <button id="capture" class="btn" disabled>Take Photo</button>
@@ -48,9 +62,8 @@ if (!isset($_SESSION['user'])) {
             <div class="stickers-container">
                 <h3>Select Sticker</h3>
                 <div class="sticker-grid">
-
-                <img src="../public/assets/stickers/frame1.png" class="sticker" data-sticker="frame1" width="100">
-                <img src="../public/assets/stickers/frame2.png" class="sticker" data-sticker="frame2" width="100">
+                    <img src="/public/assets/stickers/frame1.png" class="sticker" data-sticker="frame1" width="100">
+                    <img src="/public/assets/stickers/frame2.png" class="sticker" data-sticker="frame2" width="100">
                 </div>
             </div>
         </div>
@@ -64,14 +77,35 @@ if (!isset($_SESSION['user'])) {
     <script>
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('canvas');
+        const previewCanvas = document.getElementById('previewCanvas');
         const startButton = document.getElementById('startCamera');
         const captureButton = document.getElementById('capture');
         let selectedSticker = null;
+        let animationFrame;
 
-        console.log("Script loaded");
+        function drawPreview() {
+            if (!video.videoWidth) return;
+
+            previewCanvas.width = video.videoWidth;
+            previewCanvas.height = video.videoHeight;
+            const ctx = previewCanvas.getContext('2d');
+
+            // Dessiner la vidéo
+            ctx.drawImage(video, 0, 0);
+
+            // Dessiner le sticker si sélectionné
+            if (selectedSticker) {
+                const sticker = document.querySelector(`[data-sticker="${selectedSticker}"]`);
+                // Position centrée du sticker
+                const x = (video.videoWidth - sticker.width) / 2;
+                const y = (video.videoHeight - sticker.height) / 2;
+                ctx.drawImage(sticker, x, y);
+            }
+
+            animationFrame = requestAnimationFrame(drawPreview);
+        }
 
         startButton.addEventListener('click', async () => {
-            console.log("Start camera clicked");
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
@@ -83,7 +117,7 @@ if (!isset($_SESSION['user'])) {
                 await video.play();
                 startButton.disabled = true;
                 captureButton.disabled = false;
-                console.log("Camera started");
+                drawPreview();
             } catch (err) {
                 console.error('Error:', err);
                 alert('Could not access camera: ' + err.message);
@@ -92,7 +126,6 @@ if (!isset($_SESSION['user'])) {
 
         document.querySelectorAll('.sticker').forEach(sticker => {
             sticker.addEventListener('click', () => {
-                console.log("Sticker selected:", sticker.dataset.sticker);
                 document.querySelectorAll('.sticker').forEach(s => s.classList.remove('selected'));
                 sticker.classList.add('selected');
                 selectedSticker = sticker.dataset.sticker;
@@ -100,20 +133,13 @@ if (!isset($_SESSION['user'])) {
         });
 
         captureButton.addEventListener('click', async () => {
-            console.log("Capture clicked");
             if (!selectedSticker) {
                 alert('Please select a sticker first');
                 return;
             }
 
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.drawImage(video, 0, 0);
-            console.log("Photo captured");
-            
-            const imageData = canvas.toDataURL('image/png');
+            // Utiliser le canvas de prévisualisation pour la capture
+            const imageData = previewCanvas.toDataURL('image/png');
             
             try {
                 const response = await fetch('/editor/capture', {
@@ -129,10 +155,9 @@ if (!isset($_SESSION['user'])) {
                 
                 const data = await response.json();
                 if (data.success) {
-                    console.log("Photo saved");
                     refreshPhotosList();
                 } else {
-                    alert('Error saving photo: ' + data.error);
+                    alert('Error saving photo: ' + (data.error || 'Unknown error'));
                 }
             } catch (err) {
                 console.error('Error:', err);
@@ -154,6 +179,16 @@ if (!isset($_SESSION['user'])) {
                 console.error('Error refreshing photos:', err);
             }
         }
+
+        // Nettoyage lors de la fermeture
+        window.addEventListener('beforeunload', () => {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+        });
 
         refreshPhotosList();
     </script>

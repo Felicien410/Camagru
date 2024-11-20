@@ -4,6 +4,8 @@ session_start();
 require_once __DIR__ . '/config/Database.php';
 require_once __DIR__ . '/models/User.php';
 require_once __DIR__ . '/controllers/AuthController.php';
+require_once __DIR__ . '/controllers/EditorController.php';
+require_once __DIR__ . '/models/Image.php';
 
 $request = $_SERVER['REQUEST_URI'];
 $controller = new AuthController();

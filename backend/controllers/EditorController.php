@@ -9,61 +9,84 @@ class EditorController {
     }
 
     public function capture() {
-        error_log("Capture endpoint called");
-        
         if (!isset($_SESSION['user'])) {
-            error_log("User not authenticated");
             echo json_encode(['error' => 'Not authenticated']);
             exit;
         }
-
+    
         $data = json_decode(file_get_contents('php://input'), true);
-        error_log("Received data: " . json_encode($data));
         
-        if (!isset($data['image']) || !isset($data['sticker'])) {
-            error_log("Missing data");
-            echo json_encode(['error' => 'Missing data']);
-            exit;
-        }
-
         try {
-            $uploadsDir = __DIR__ . '/../public/uploads';
-            if (!file_exists($uploadsDir)) {
-                error_log("Creating uploads directory");
-                mkdir($uploadsDir, 0777, true);
-            }
-
+            // Créer l'image depuis la webcam
             $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $data['image']));
-            $fileName = uniqid() . '.png';
-            $filePath = $uploadsDir . '/' . $fileName;
+            $sourceImage = imagecreatefromstring($imageData);
             
-            error_log("Saving to: " . $filePath);
-            if (file_put_contents($filePath, $imageData)) {
-                error_log("File saved successfully");
-            } else {
-                error_log("Failed to save file");
+            if (!$sourceImage) {
+                throw new Exception('Failed to create image from webcam data');
             }
 
-            if ($this->image->create($_SESSION['user']['id'], '/uploads/' . $fileName)) {
-                error_log("Database record created");
+            // Charger le sticker
+            $stickerPath = __DIR__ . "/../public/assets/stickers/{$data['sticker']}.png";
+            $sticker = imagecreatefrompng($stickerPath);
+            
+            if (!$sticker) {
+                throw new Exception('Failed to load sticker');
+            }
+
+            // Activer la transparence
+            imagealphablending($sourceImage, true);
+            imagesavealpha($sourceImage, true);
+            
+            // Calculer position du sticker (centré)
+            $stickerWidth = imagesx($sticker);
+            $stickerHeight = imagesy($sticker);
+            $sourceWidth = imagesx($sourceImage);
+            $sourceHeight = imagesy($sourceImage);
+            
+            $destX = ($sourceWidth - $stickerWidth) / 2;
+            $destY = ($sourceHeight - $stickerHeight) / 2;
+            
+            // Superposer le sticker avec sa taille originale et centré
+            imagecopy(
+                $sourceImage, // destination
+                $sticker,    // source
+                $destX,      // dest x
+                $destY,      // dest y
+                0,          // src x
+                0,          // src y
+                $stickerWidth,
+                $stickerHeight
+            );
+            
+            // Sauvegarder
+            $fileName = uniqid() . '.png';
+            $filePath = __DIR__ . '/../public/uploads/' . $fileName;
+            
+            if (!imagepng($sourceImage, $filePath)) {
+                throw new Exception('Failed to save image');
+            }
+            
+            // Nettoyer
+            imagedestroy($sourceImage);
+            imagedestroy($sticker);
+            
+            if ($this->image->create($_SESSION['user']['id'], '/public/uploads/' . $fileName)) {
                 echo json_encode(['success' => true]);
             } else {
-                error_log("Database error");
-                echo json_encode(['error' => 'Database error']);
+                throw new Exception('Failed to save to database');
             }
         } catch (Exception $e) {
-            error_log("Error: " . $e->getMessage());
+            error_log("Error in capture: " . $e->getMessage());
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
-
+    
     public function getPhotos() {
         try {
             if (!isset($_SESSION['user'])) {
                 throw new Exception('Not authenticated');
             }
             $photos = $this->image->getUserImages($_SESSION['user']['id']);
-            error_log("Retrieved photos: " . json_encode($photos));
             echo json_encode($photos);
         } catch (Exception $e) {
             error_log("Error getting photos: " . $e->getMessage());
