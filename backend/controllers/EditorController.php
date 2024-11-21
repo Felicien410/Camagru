@@ -17,58 +17,16 @@ class EditorController {
         $data = json_decode(file_get_contents('php://input'), true);
         
         try {
-            // Créer l'image depuis la webcam
+            // Créer l'image depuis les données reçues
             $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $data['image']));
-            $sourceImage = imagecreatefromstring($imageData);
             
-            if (!$sourceImage) {
-                throw new Exception('Failed to create image from webcam data');
-            }
-
-            // Charger le sticker
-            $stickerPath = __DIR__ . "/../public/assets/stickers/{$data['sticker']}.png";
-            $sticker = imagecreatefrompng($stickerPath);
-            
-            if (!$sticker) {
-                throw new Exception('Failed to load sticker');
-            }
-
-            // Activer la transparence
-            imagealphablending($sourceImage, true);
-            imagesavealpha($sourceImage, true);
-            
-            // Calculer position du sticker (centré)
-            $stickerWidth = imagesx($sticker);
-            $stickerHeight = imagesy($sticker);
-            $sourceWidth = imagesx($sourceImage);
-            $sourceHeight = imagesy($sourceImage);
-            
-            $destX = ($sourceWidth - $stickerWidth) / 2;
-            $destY = ($sourceHeight - $stickerHeight) / 2;
-            
-            // Superposer le sticker avec sa taille originale et centré
-            imagecopy(
-                $sourceImage, // destination
-                $sticker,    // source
-                $destX,      // dest x
-                $destY,      // dest y
-                0,          // src x
-                0,          // src y
-                $stickerWidth,
-                $stickerHeight
-            );
-            
-            // Sauvegarder
+            // Sauvegarder directement l'image
             $fileName = uniqid() . '.png';
             $filePath = __DIR__ . '/../public/uploads/' . $fileName;
             
-            if (!imagepng($sourceImage, $filePath)) {
+            if (!file_put_contents($filePath, $imageData)) {
                 throw new Exception('Failed to save image');
             }
-            
-            // Nettoyer
-            imagedestroy($sourceImage);
-            imagedestroy($sticker);
             
             if ($this->image->create($_SESSION['user']['id'], '/public/uploads/' . $fileName)) {
                 echo json_encode(['success' => true]);
@@ -86,7 +44,8 @@ class EditorController {
             if (!isset($_SESSION['user'])) {
                 throw new Exception('Not authenticated');
             }
-            $photos = $this->image->getUserImages($_SESSION['user']['id']);
+            $limit = 12; // Limite à 12 photos
+            $photos = $this->image->getUserImages($_SESSION['user']['id'], $limit);
             echo json_encode($photos);
         } catch (Exception $e) {
             error_log("Error getting photos: " . $e->getMessage());

@@ -18,17 +18,17 @@ CREATE TABLE images (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE comments (
+CREATE TABLE IF NOT EXISTS comments (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     image_id INT NOT NULL,
-    comment TEXT NOT NULL,
+    content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
 );
 
-CREATE TABLE likes (
+CREATE TABLE IF NOT EXISTS likes (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     image_id INT NOT NULL,
