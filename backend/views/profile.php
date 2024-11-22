@@ -43,11 +43,12 @@ if (!isset($_SESSION['user'])) {
             </div>
 
             <div class="form-group">
-                <label for="password">New Password</label>
-                <input type="password" id="password" name="password" 
-                       class="form-control">
-                <small>Leave blank to keep current password</small>
-            </div>
+            <label>
+                <input type="checkbox" name="notifications_enabled" 
+                    <?php echo $user['notifications_enabled'] ? 'checked' : ''; ?>>
+                Receive email notifications for comments
+            </label>
+        </div>
 
             <button type="submit" class="btn btn-primary">Update Profile</button>
             <a href="/dashboard" class="btn">Back to Dashboard</a>

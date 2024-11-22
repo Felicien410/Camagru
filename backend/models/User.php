@@ -116,18 +116,32 @@ class User {
     }
 
     private function sendVerificationEmail($email, $token) {
-        $to = $email;
-        $subject = "Verify your Camagru account";
-        $url = "http://localhost:8080/verify.php?token=" . $token;
-        
-        $message = "Hello,\n\n";
-        $message .= "Thank you for registering at Camagru. Please click the link below to verify your account:\n\n";
-        $message .= $url . "\n\n";
-        $message .= "If you didn't create this account, please ignore this email.";
-        
-        $headers = "From: noreply@camagru.com";
-        
-        mail($to, $subject, $message, $headers);
+        try {
+            $to = $email;
+            $subject = "Verify your Camagru account";
+            $url = "http://localhost:8080/verify.php?token=" . $token;
+            
+            $message = "Hello,\n\n";
+            $message .= "Thank you for registering at Camagru. Please click the link below to verify your account:\n\n";
+            $message .= $url . "\n\n";
+            $message .= "If you didn't create this account, please ignore this email.";
+            
+            $headers = array(
+                'From' => 'noreply@camagru.com',
+                'Content-Type' => 'text/plain; charset=utf-8'
+            );
+    
+            if (mail($to, $subject, $message, $headers)) {
+                error_log("Verification email sent successfully to: " . $to);
+                return true;
+            } else {
+                error_log("Failed to send verification email to: " . $to);
+                return false;
+            }
+        } catch (Exception $e) {
+            error_log("Error sending verification email: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function updateProfile($userId, $data) {
@@ -185,5 +199,44 @@ class User {
         $stmt->execute([$userId]);
         $row = $stmt->fetch();
         return $row['email'] === $email;
+}
+
+public function updateNotificationSettings($userId, $notify) {
+    try {
+        $query = "UPDATE " . $this->table . " 
+                SET notifications_enabled = :notify 
+                WHERE id = :id";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":notify", $notify, PDO::PARAM_BOOL);
+        $stmt->bindParam(":id", $userId);
+        
+        return $stmt->execute();
+    } catch(PDOException $e) {
+        error_log("Error updating notification settings: " . $e->getMessage());
+        return false;
+    }
+}
+
+public function sendCommentNotification($userEmail, $imagePath) {
+    try {
+        $to = $userEmail;
+        $subject = "New Comment on Your Camagru Photo";
+        
+        $message = "Hello,\n\n";
+        $message .= "Someone commented on your photo.\n";
+        $message .= "View the photo here: http://localhost:8080" . $imagePath . "\n\n";
+        $message .= "Best regards,\nCamagru Team";
+        
+        $headers = array(
+            'From' => 'noreply@camagru.com',
+            'Content-Type' => 'text/plain; charset=utf-8'
+        );
+
+        return mail($to, $subject, $message, $headers);
+    } catch (Exception $e) {
+        error_log("Error sending notification: " . $e->getMessage());
+        return false;
+    }
 }
 }

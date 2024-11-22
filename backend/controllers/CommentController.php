@@ -1,12 +1,17 @@
 <?php
 class CommentController {
     private $comment;
+    private $user;
+    private $image;
 
     public function __construct() {
         $database = new Database();
         $db = $database->getConnection();
         $this->comment = new Comment($db);
+        $this->user = new User($db);
+        $this->image = new Image($db);
     }
+
 
     public function addComment() {
         header('Content-Type: application/json');

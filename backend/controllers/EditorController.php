@@ -52,4 +52,23 @@ class EditorController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+    public function deletePhoto() {
+        if (!isset($_SESSION['user'])) {
+            echo json_encode(['error' => 'Not authenticated']);
+            exit;
+        }
+    
+        $data = json_decode(file_get_contents('php://input'), true);
+    
+        if (!isset($data['imageId'])) {
+            echo json_encode(['error' => 'Image ID required']);
+            exit;
+        }
+    
+        if ($this->image->deleteImage($data['imageId'], $_SESSION['user']['id'])) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['error' => 'Failed to delete image']);
+        }
+    }
 }

@@ -1,3 +1,5 @@
+version: '3'
+
 services:
   app:
     build:
@@ -15,10 +17,12 @@ services:
       - DB_NAME=camagru
     depends_on:
       - db
+      - mailhog
 
   db:
     image: mysql:8.0
     container_name: camagru_db
+    platform: linux/arm64/v8  # Ajoutez cette ligne si nécessaire
     ports:
       - "3306:3306"
     environment:
@@ -27,9 +31,21 @@ services:
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
       - db_data:/var/lib/mysql
+
   adminer:
-      image: adminer
-      ports:
-        - 8081:8080
+    image: adminer
+    container_name: camagru_adminer
+    platform: linux/arm64/v8  # Ajoutez cette ligne si nécessaire
+    ports:
+      - "8081:8080"
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    platform: linux/amd64  # Spécifiez la plateforme ici
+    ports:
+      - "8025:8025"   # Interface web de MailHog
+      - "1025:1025"   # Port SMTP
+
 volumes:
   db_data:
