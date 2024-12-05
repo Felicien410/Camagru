@@ -21,6 +21,17 @@ switch ($request) {
         require __DIR__ . '/views/home.php';
         break;
         
+    case '/forgot-password':
+    case '/forgot-password.php':
+    case '/auth/forgot-password':
+        $controller->forgotPassword();
+        break;
+            
+    case '/reset-password.php':
+    case '/auth/reset-password':
+        $controller->resetPassword();
+        break;
+
     case '/register':
     case '/register.php':
     case '/auth/register':
@@ -43,7 +54,7 @@ switch ($request) {
         break;
         
     case '/profile':
-        require __DIR__ . '/views/profile.php';
+        $controller->showProfile();  // Au lieu de require __DIR__ . '/views/profile.php'
         break;
     
     case '/profile/update':
@@ -93,4 +104,5 @@ switch ($request) {
         http_response_code(404);
         require __DIR__ . '/views/404.php';
         break;
+
 }

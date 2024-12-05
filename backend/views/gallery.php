@@ -266,14 +266,19 @@ async function loadComments(imageId) {
         console.error('Error loading comments:', error);
     }
 }
-
 async function addComment(event, imageId) {
     event.preventDefault();
     const form = event.target;
     const input = form.querySelector('input');
     const content = input.value.trim();
 
+    console.log('Attempting to add comment:', {
+        imageId,
+        content
+    });
+
     try {
+        console.log('Sending request to /comments/add');
         const response = await fetch('/comments/add', {
             method: 'POST',
             headers: {
@@ -282,19 +287,32 @@ async function addComment(event, imageId) {
             body: JSON.stringify({ imageId, content })
         });
 
-        const data = await response.json();
+        console.log('Response status:', response.status);
+        console.log('Response headers:', [...response.headers.entries()]);
+
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            throw new Error('Invalid JSON response: ' + responseText);
+        }
+
         if (data.success) {
             input.value = '';
             await loadComments(imageId);
-            // Mettre à jour le compteur de commentaires
             const counter = form.closest('.comments-section')
                                .querySelector('.comment-count');
             counter.textContent = parseInt(counter.textContent) + 1;
         } else {
-            alert(data.error || 'Failed to add comment');
+            throw new Error(data.error || 'Failed to add comment');
         }
     } catch (error) {
-        console.error('Error adding comment:', error);
+        console.error('Detailed error:', error);
+        alert(error.message || 'Failed to add comment. Please try again.');
     }
 }
 </script>

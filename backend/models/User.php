@@ -218,9 +218,30 @@ public function updateNotificationSettings($userId, $notify) {
     }
 }
 
-public function sendCommentNotification($userEmail, $imagePath) {
+
+public function getUserById($userId) {
     try {
-        $to = $userEmail;
+        $query = "SELECT * FROM " . $this->table . " 
+                WHERE id = :id";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id", $userId);
+        $stmt->execute();
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error in getUserById: " . $e->getMessage());
+        return null;
+    }
+}
+
+public function sendCommentNotification($email, $imagePath) {
+    try {
+        error_log("Attempting to send notification");
+        error_log("Email: " . $email);
+        error_log("Image path: " . $imagePath);
+        
+        $to = $email;
         $subject = "New Comment on Your Camagru Photo";
         
         $message = "Hello,\n\n";
@@ -228,15 +249,164 @@ public function sendCommentNotification($userEmail, $imagePath) {
         $message .= "View the photo here: http://localhost:8080" . $imagePath . "\n\n";
         $message .= "Best regards,\nCamagru Team";
         
+        error_log("Full message: " . $message);
+        
         $headers = array(
             'From' => 'noreply@camagru.com',
             'Content-Type' => 'text/plain; charset=utf-8'
         );
 
-        return mail($to, $subject, $message, $headers);
+        $mailResult = mail($to, $subject, $message, $headers);
+        error_log("Mail function returned: " . ($mailResult ? "true" : "false"));
+        return $mailResult;
     } catch (Exception $e) {
-        error_log("Error sending notification: " . $e->getMessage());
+        error_log("Error sending comment notification: " . $e->getMessage());
         return false;
     }
 }
+
+public function initiatePasswordReset($email) {
+    try {
+        error_log("Début de initiatePasswordReset pour : " . $email);
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            error_log("Email invalide");
+            return ['error' => 'Adresse email invalide'];
+        }
+
+        $query = "SELECT id FROM " . $this->table . " WHERE email = :email AND is_verified = true";
+        error_log("Requête SQL : " . $query);
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        
+        error_log("Nombre de résultats : " . $stmt->rowCount());
+
+        if ($stmt->rowCount() === 0) {
+            error_log("Aucun compte vérifié trouvé pour cet email");
+            return ['error' => 'Aucun compte vérifié trouvé avec cette adresse email'];
+        }
+
+        // Generate reset token
+        $reset_token = bin2hex(random_bytes(32));
+        $token_expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+        // Store reset token in database
+        $query = "UPDATE " . $this->table . " 
+                SET reset_token = :token, reset_token_expiry = :expiry 
+                WHERE email = :email";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':token', $reset_token);
+        $stmt->bindParam(':expiry', $token_expiry);
+        $stmt->bindParam(':email', $email);
+        
+        if ($stmt->execute()) {
+            $this->sendPasswordResetEmail($email, $reset_token);
+            return [
+                'success' => true,
+                'message' => 'Password reset instructions have been sent to your email'
+            ];
+        }
+
+        return ['error' => 'Unable to process password reset request'];
+    } catch (Exception $e) {
+        error_log("Password reset initiation error: " . $e->getMessage());
+        return ['error' => 'An error occurred during password reset initiation'];
+    }
 }
+
+private function sendPasswordResetEmail($email, $token) {
+    try {
+        $to = $email;
+        $subject = "Reset Your Camagru Password";
+        $url = "http://localhost:8080/reset-password.php?token=" . $token;
+        
+        $message = "Hello,\n\n";
+        $message .= "You have requested to reset your password for your Camagru account.\n\n";
+        $message .= "Please click the link below to reset your password:\n\n";
+        $message .= $url . "\n\n";
+        $message .= "This link will expire in 1 hour.\n\n";
+        $message .= "If you didn't request this password reset, please ignore this email.";
+        
+        $headers = array(
+            'From' => 'noreply@camagru.com',
+            'Content-Type' => 'text/plain; charset=utf-8'
+        );
+
+        if (mail($to, $subject, $message, $headers)) {
+            error_log("Password reset email sent successfully to: " . $to);
+            return true;
+        } else {
+            error_log("Failed to send password reset email to: " . $to);
+            return false;
+        }
+    } catch (Exception $e) {
+        error_log("Error sending password reset email: " . $e->getMessage());
+        return false;
+    }
+}
+
+public function validateResetToken($token) {
+    try {
+        $query = "SELECT id FROM " . $this->table . " 
+                WHERE reset_token = :token 
+                AND reset_token_expiry > NOW()";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':token', $token);
+        $stmt->execute();
+        
+        return $stmt->rowCount() > 0;
+    } catch (Exception $e) {
+        error_log("Token validation error: " . $e->getMessage());
+        return false;
+    }
+}
+
+public function resetPassword($token, $new_password) {
+    try {
+        if (strlen($new_password) < 8) {
+            return ['error' => 'Password must be at least 8 characters long'];
+        }
+
+        $query = "SELECT id FROM " . $this->table . " 
+                WHERE reset_token = :token 
+                AND reset_token_expiry > NOW()";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':token', $token);
+        $stmt->execute();
+        
+        if ($stmt->rowCount() === 0) {
+            return ['error' => 'Invalid or expired reset token'];
+        }
+
+        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+        
+        $query = "UPDATE " . $this->table . " 
+                SET password = :password, 
+                    reset_token = NULL, 
+                    reset_token_expiry = NULL 
+                WHERE reset_token = :token";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':password', $hashed_password);
+        $stmt->bindParam(':token', $token);
+        
+        if ($stmt->execute()) {
+            return [
+                'success' => true,
+                'message' => 'Your password has been successfully reset'
+            ];
+        }
+
+        return ['error' => 'Unable to reset password'];
+    } catch (Exception $e) {
+        error_log("Password reset error: " . $e->getMessage());
+        return ['error' => 'An error occurred while resetting password'];
+    }
+}
+}
+

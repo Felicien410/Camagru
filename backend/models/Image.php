@@ -88,4 +88,24 @@ class Image {
         
         return $stmt->fetchColumn();
     }
+
+    public function getImageById($imageId) {
+        try {
+            error_log("Getting image with ID: " . $imageId);
+            $query = "SELECT i.*, u.email FROM " . $this->table . " i
+                      JOIN users u ON i.user_id = u.id
+                      WHERE i.id = :id";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":id", $imageId);
+            $stmt->execute();
+            
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            error_log("Image info found: " . json_encode($result));
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error in getImageById: " . $e->getMessage());
+            return null;
+        }
+    }
 }

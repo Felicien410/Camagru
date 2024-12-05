@@ -12,49 +12,93 @@ class CommentController {
         $this->image = new Image($db);
     }
 
-
-    public function addComment() {
-        header('Content-Type: application/json');
-        
-        try {
-            if (!isset($_SESSION['user'])) {
-                error_log("User not authenticated");
-                echo json_encode(['error' => 'Not authenticated']);
-                exit;
-            }
+public function addComment() {
+    header('Content-Type: application/json');
     
-            $data = json_decode(file_get_contents('php://input'), true);
-            error_log("Received data: " . json_encode($data));
-    
-            if (!isset($data['imageId']) || !isset($data['content']) || empty(trim($data['content']))) {
-                error_log("Missing data in request");
-                echo json_encode(['error' => 'Missing required data']);
-                exit;
-            }
-    
-            $result = $this->comment->create(
-                $_SESSION['user']['id'],
-                $data['imageId'],
-                htmlspecialchars(trim($data['content']))
-            );
-    
-            if ($result) {
-                $comments = $this->comment->getImageComments($data['imageId']);
-                echo json_encode([
-                    'success' => true,
-                    'comments' => $comments
-                ]);
-            } else {
-                error_log("Failed to create comment");
-                echo json_encode(['error' => 'Failed to add comment']);
-            }
-        } catch (Exception $e) {
-            error_log("Error in addComment: " . $e->getMessage());
-            echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    try {
+        // Vérification d'authentification
+        if (!isset($_SESSION['user'])) {
+            error_log("User not authenticated");
+            echo json_encode(['error' => 'Not authenticated']);
+            exit;
         }
-        exit;
-    }
 
+        // Récupération et validation des données
+        $data = json_decode(file_get_contents('php://input'), true);
+        error_log("Received data: " . json_encode($data));
+
+        if (!isset($data['imageId']) || !isset($data['content']) || empty(trim($data['content']))) {
+            error_log("Missing data in request");
+            echo json_encode(['error' => 'Missing required data']);
+            exit;
+        }
+
+        // Récupération des infos de l'image
+        $imageInfo = $this->image->getImageById($data['imageId']);
+        if (!$imageInfo) {
+            error_log("Image not found");
+            echo json_encode(['error' => 'Image not found']);
+            exit;
+        }
+
+        // Création du commentaire
+        $result = $this->comment->create(
+            $_SESSION['user']['id'],
+            $data['imageId'],
+            htmlspecialchars(trim($data['content']))
+        );
+
+        if ($result) {
+            // Gestion des notifications
+            if ($imageInfo['user_id'] != $_SESSION['user']['id']) {
+                error_log("Different users - checking notifications");
+                $imageOwner = $this->user->getUserById($imageInfo['user_id']);
+                error_log("Image owner: " . json_encode($imageOwner));
+
+                if ($imageOwner && isset($imageOwner['notifications_enabled'])) {
+                    error_log("Notifications status: " . ($imageOwner['notifications_enabled'] ? 'enabled' : 'disabled'));
+                    
+                    if ($imageOwner['notifications_enabled']) {
+                        try {
+                            error_log("Attempting to send notification to " . $imageOwner['email']);
+                            error_log("For image path: " . $imageInfo['image_path']);
+                            
+                            $notificationResult = $this->user->sendCommentNotification(
+                                $imageOwner['email'],
+                                $imageInfo['image_path']
+                            );
+                            error_log("Notification send result: " . ($notificationResult ? 'success' : 'failed'));
+                        } catch (Exception $e) {
+                            error_log("Notification error: " . $e->getMessage());
+                        }
+                    } else {
+                        error_log("User has notifications disabled");
+                    }
+                } else {
+                    error_log("User preferences not found");
+                }
+            } else {
+                error_log("Self-comment - no notification needed");
+            }
+
+            // Retour des commentaires mis à jour
+            $comments = $this->comment->getImageComments($data['imageId']);
+            echo json_encode([
+                'success' => true,
+                'comments' => $comments
+            ]);
+        } else {
+            error_log("Failed to create comment");
+            echo json_encode(['error' => 'Failed to add comment']);
+        }
+    } catch (Exception $e) {
+        error_log("Error in addComment: " . $e->getMessage());
+        echo json_encode(['error' => 'Server error']);
+    }
+    exit;
+}
+
+    
     public function getComments($imageId) {
         header('Content-Type: application/json');
         try {
