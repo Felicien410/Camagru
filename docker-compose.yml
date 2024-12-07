@@ -16,13 +16,12 @@ services:
       - DB_PASSWORD=root
       - DB_NAME=camagru
     depends_on:
-      - db
-      - mailhog
+      db:
+        condition: service_healthy
 
   db:
     image: mysql:8.0
     container_name: camagru_db
-    platform: linux/arm64/v8  # Ajoutez cette ligne si nécessaire
     ports:
       - "3306:3306"
     environment:
@@ -31,21 +30,27 @@ services:
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   adminer:
     image: adminer
     container_name: camagru_adminer
-    platform: linux/arm64/v8  # Ajoutez cette ligne si nécessaire
     ports:
       - "8081:8080"
+    depends_on:
+      - db
 
   mailhog:
     image: mailhog/mailhog
     container_name: mailhog
-    platform: linux/amd64  # Spécifiez la plateforme ici
     ports:
-      - "8025:8025"   # Interface web de MailHog
-      - "1025:1025"   # Port SMTP
+      - "8025:8025"
+      - "1025:1025"
 
 volumes:
   db_data:
