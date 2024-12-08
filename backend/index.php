@@ -48,11 +48,7 @@ switch ($request) {
         $controller->logout();
         break;
 
-    case '/dashboard':
-    case '/dashboard.php':
-        require __DIR__ . '/views/dashboard.php';
-        break;
-        
+
     case '/profile':
         $controller->showProfile();  // Au lieu de require __DIR__ . '/views/profile.php'
         break;
@@ -104,7 +100,7 @@ switch ($request) {
         $editorController = new EditorController();
         $editorController->deletePhoto();
         break;    
-        
+
     default:
         http_response_code(404);
         require __DIR__ . '/views/404.php';

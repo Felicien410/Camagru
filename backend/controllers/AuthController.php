@@ -74,7 +74,7 @@ class AuthController {
 
         $_SESSION['user'] = $result['user'];
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // Nouveau token après connexion
-        header("Location: /dashboard");
+        header("Location: /gallery");
         exit();
     }
 

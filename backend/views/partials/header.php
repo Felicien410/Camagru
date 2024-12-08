@@ -12,7 +12,6 @@
 
         <div class="nav-links">
             <?php if (isset($_SESSION['user'])): ?>
-                <a href="/dashboard">Dashboard</a>
                 <a href="/gallery">Gallery</a>
                 <a href="/editor">Editor</a>
                 <a href="/profile">Profile</a>

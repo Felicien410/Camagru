@@ -79,7 +79,6 @@ if (!isset($_SESSION['user'])) {
             </div>
 
             <button type="submit" class="btn btn-primary">Update Profile</button>
-            <a href="/dashboard" class="btn">Back to Dashboard</a>
         </form>
     </div>
 
