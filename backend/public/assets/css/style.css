@@ -1,4 +1,4 @@
-/* Base styles */
+/* Reset et styles de base */
 * {
     margin: 0;
     padding: 0;
@@ -6,201 +6,306 @@
 }
 
 body {
+    background-color: #000;
+    color: #fff;
     font-family: Arial, sans-serif;
     line-height: 1.6;
-    background-color: #f4f4f4;
+    min-height: 100vh;
+    position: relative;
 }
 
-/* Header styles */
-.header {
-    background-color: #ffffff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 1rem 0;
-    margin-bottom: 2rem;
+/* Effet d'étoiles */
+.stars {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, #fff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 50px 160px, #fff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 130px 80px, #fff, rgba(0,0,0,0));
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    animation: twinkle 5s ease-in-out infinite alternate;
+    z-index: -1;
 }
 
-.nav-container {
+@keyframes twinkle {
+    from { opacity: 0.5; }
+    to { opacity: 1; }
+}
+
+/* Container général */
+.container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 20px;
+    position: relative;
+}
+
+/* Header et Navigation */
+.header {
+    background: rgba(0, 0, 0, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header nav {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+.logo a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 24px;
+    font-weight: bold;
+}
+
 .nav-links {
     display: flex;
-    gap: 1rem;
+    gap: 20px;
+    align-items: center;
 }
 
 .nav-links a {
+    color: #fff;
     text-decoration: none;
-    color: #333;
-    padding: 0.5rem 1rem;
+    padding: 8px 16px;
     border-radius: 4px;
     transition: background-color 0.3s;
 }
 
 .nav-links a:hover {
-    background-color: #f0f0f0;
+    background: rgba(255, 255, 255, 0.1);
 }
 
-.btn-logout {
-    color: #dc3545 !important;
+/* Menu Hamburger */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
 }
 
-/* Container and general layout */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem;
-}
-
-/* Form styles */
-.form {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-group label {
+.hamburger span {
     display: block;
-    margin-bottom: 0.5rem;
-    color: #333;
+    width: 25px;
+    height: 3px;
+    background-color: #fff;
+    transition: 0.3s;
 }
 
-.form-control {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-/* Button styles */
+/* Boutons */
 .btn {
     display: inline-block;
-    padding: 0.5rem 1rem;
-    background-color: #007bff;
-    color: white;
+    padding: 10px 20px;
+    background: #333;
+    color: #fff;
     text-decoration: none;
-    border-radius: 4px;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.3s;
 }
 
 .btn:hover {
-    background-color: #0056b3;
+    background: #444;
+}
+
+.btn:disabled {
+    background: #222;
+    cursor: not-allowed;
+}
+
+.btn-logout {
+    background: #ff4444;
+}
+
+.btn-logout:hover {
+    background: #ff2222;
 }
 
 .btn-danger {
-    background-color: #dc3545;
+    background: #dc3545;
 }
 
 .btn-danger:hover {
-    background-color: #c82333;
+    background: #c82333;
 }
 
-/* Alert styles */
-.alert {
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 4px;
+/* Dashboard */
+.dashboard-menu {
+    margin-top: 20px;
 }
 
-.alert-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-.alert-success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-/* Editor specific styles */
+/* Editor */
 .editor-container {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
 }
 
 .webcam-container {
-    width: 640px;
-    height: 480px;
+    max-width: 640px;
     margin: 0 auto;
-    position: relative;
-    background: #f0f0f0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+
 }
 
-/* Gallery specific styles */
-.gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.gallery-item {
-    background: white;
+#webcam, #previewCanvas {
+    width: 100%;
+    background: #111;
     border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
 }
 
-.like-btn {
-    background: none;
-    border: 2px solid #ff4757;
-    padding: 8px 15px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.like-btn.liked {
-    background-color: #ff4757;
-    color: white;
-}
-
-/* Comments section */
-.comments-section {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #eee;
-}
-
-.comment-form {
+.button-group {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 20px 0;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-    .editor-container {
-        grid-template-columns: 1fr;
-    }
+/* Stickers */
+.stickers-container {
+    margin: 20px 0;
+}
 
-    .webcam-container {
-        width: 100%;
-        height: auto;
+.sticker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.sticker {
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    transition: border-color 0.3s;
+}
+
+.sticker:hover {
+    border-color: #fff;
+}
+
+.sticker.selected {
+    border-color: #0095f6;
+}
+
+/* Preview Photos */
+.preview-container {
+    margin-top: 30px;
+}
+
+#photosList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* 404 Page */
+.error-404 {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.error-404 h1 {
+    font-size: 120px;
+    margin-bottom: 20px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hamburger {
+        display: flex;
     }
 
     .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.95);
         flex-direction: column;
+        padding: 10px;
+    }
+
+    .nav-links.active {
+        display: flex;
+    }
+
+    .nav-links a {
+        padding: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-links a:last-child {
+        border-bottom: none;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .button-group .btn {
+        width: 100%;
+    }
+
+    .error-404 h1 {
+        font-size: 80px;
     }
 }
 
-#webcam {
-    display: none;
+/* Titres */
+h1 {
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+h3 {
+    margin-bottom: 15px;
+    color: #fff;
+}
+
+/* File Upload */
+input[type="file"] {
+    padding: 10px;
+    background: #333;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+    visibility: hidden;
+    width: 0;
+}
+
+input[type="file"]::before {
+    content: 'Choose File';
+    display: inline-block;
+    background: #444;
+    padding: 8px 16px;
+    border-radius: 4px;
+    margin-right: 10px;
+    cursor: pointer;
 }

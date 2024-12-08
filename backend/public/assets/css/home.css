@@ -1,0 +1,227 @@
+/* Reset et styles de base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 50%, #000011 0%, #000 80%) fixed;
+}
+
+/* Conteneur principal */
+.container {
+    max-width: 800px;
+    margin: 120px auto;
+    padding: 20px;
+    position: relative;
+    text-align: center;
+    z-index: 10;
+}
+
+/* Effets cosmiques */
+body::before,
+body::after,
+.container::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    opacity: 0.3;
+    animation: twinkle 10s infinite alternate ease-in-out;
+    z-index: -3;
+}
+
+/* Première couche d'étoiles */
+body::before {
+    background-image:
+        radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+        radial-gradient(1px 1px at 60px 100px, #fff, transparent),
+        radial-gradient(1px 1px at 100px 70px, #fff, transparent),
+        radial-gradient(1px 1px at 180px 140px, #fff, transparent),
+        radial-gradient(1px 1px at 200px 190px, #fff, transparent);
+    animation-delay: 0s;
+}
+
+/* Deuxième couche d'étoiles, plus fine */
+body::after {
+    background-image:
+        radial-gradient(1px 1px at 50px 50px, #fff, transparent),
+        radial-gradient(1px 1px at 100px 150px, #fff, transparent),
+        radial-gradient(1px 1px at 150px 200px, #fff, transparent),
+        radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+        radial-gradient(1px 1px at 130px 80px, #fff, transparent);
+    animation-delay: 2s;
+    opacity: 0.2;
+}
+
+/* Une lueur nébuleuse derrière le conteneur */
+.container::before {
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 70%),
+                radial-gradient(circle at 40% 60%, rgba(255,255,255,0.05) 0%, transparent 80%),
+                radial-gradient(circle at 60% 40%, rgba(255,255,255,0.07) 0%, transparent 90%);
+    z-index: -1;
+    animation: slowPulse 15s infinite alternate ease-in-out;
+}
+
+/* Animations d'étoiles */
+@keyframes twinkle {
+    from {opacity: 0.2;}
+    to {opacity: 0.4;}
+}
+
+/* Pulsation lente de la nébuleuse */
+@keyframes slowPulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.1); }
+}
+
+/* Titre principal avec effet de lueur */
+h1 {
+    margin-bottom: 40px;
+    font-size: 2.5em;
+    position: relative;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255,255,255,0.5);
+    animation: glow 3s infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255,255,255,0.5);
+    }
+    to {
+        text-shadow: 0 0 20px rgba(255,255,255,1), 0 0 30px rgba(255,255,255,0.7);
+    }
+}
+
+/* Section d'explication */
+.explanation {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 40px;
+    box-shadow: 0 0 15px rgba(255,255,255,0.1);
+}
+
+.explanation p {
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    line-height: 1.8;
+    color: #ddd;
+    text-shadow: 0 0 5px rgba(255,255,255,0.05);
+}
+
+/* Texte de bienvenue */
+.container p {
+    margin-bottom: 20px;
+    font-size: 1.1em;
+}
+
+/* Boutons */
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    margin: 10px;
+    background: linear-gradient(135deg, #222, #444);
+    color: #fff;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: "";
+    position: absolute;
+    top: 0; left: -50%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.1) 100%);
+    transform: skewX(-20deg);
+    transition: all 0.5s ease;
+}
+
+.btn:hover::before {
+    left: -10%;
+}
+
+/* Effet lumineux sur hover */
+.btn:hover {
+    background: linear-gradient(135deg, #333, #555);
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+/* Auth Buttons */
+.auth-buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* Responsivité */
+/* Écrans moyens */
+@media (max-width: 768px) {
+    .container {
+        margin: 80px auto;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    .btn {
+        margin: 5px;
+        padding: 10px 20px;
+        font-size: 0.9em;
+    }
+
+    .explanation p {
+        font-size: 1em;
+    }
+}
+
+/* Écrans très petits (smartphones) */
+@media (max-width: 480px) {
+    .container {
+        margin: 60px auto;
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+        margin-bottom: 30px;
+    }
+
+    .explanation {
+        padding: 15px;
+        margin-bottom: 30px;
+    }
+
+    .explanation p {
+        font-size: 0.95em;
+        margin-bottom: 12px;
+    }
+
+    .btn {
+        padding: 10px 15px;
+        font-size: 0.9em;
+        margin: 5px;
+    }
+}

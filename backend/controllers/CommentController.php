@@ -18,7 +18,6 @@ public function addComment() {
     try {
         // Vérification d'authentification
         if (!isset($_SESSION['user'])) {
-            error_log("User not authenticated");
             echo json_encode(['error' => 'Not authenticated']);
             exit;
         }
@@ -28,7 +27,6 @@ public function addComment() {
         error_log("Received data: " . json_encode($data));
 
         if (!isset($data['imageId']) || !isset($data['content']) || empty(trim($data['content']))) {
-            error_log("Missing data in request");
             echo json_encode(['error' => 'Missing required data']);
             exit;
         }
@@ -36,7 +34,6 @@ public function addComment() {
         // Récupération des infos de l'image
         $imageInfo = $this->image->getImageById($data['imageId']);
         if (!$imageInfo) {
-            error_log("Image not found");
             echo json_encode(['error' => 'Image not found']);
             exit;
         }

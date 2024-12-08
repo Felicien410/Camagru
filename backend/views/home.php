@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camagru - Home</title>
     <link rel="stylesheet" href="/public/assets/css/style.css">
+    <link rel="stylesheet" href="/public/assets/css/home.css">
 </head>
 <body>
     <div class="container">
@@ -21,6 +22,17 @@
                 <a href="/register" class="btn">Register</a>
             </div>
         <?php endif; ?>
+        
+        <!-- Section d'explications sur Camagru -->
+        <div class="explanation">
+            <p>Camagru est une application web dédiée à la création et au partage de photos personnalisées. 
+               Vous pouvez y ajouter des filtres, des stickers et bien d'autres effets artistiques. 
+               L'idée est de donner un espace aux utilisateurs pour exprimer leur créativité, 
+               partager leurs œuvres, et interagir avec une communauté de passionnés d'image.</p>
+            <p>Que vous soyez un photographe amateur, un passionné du selfie ou simplement à la recherche 
+               d'un outil ludique pour customiser vos images, Camagru est fait pour vous.</p>
+        </div>
+        
     </div>
 </body>
 </html>

@@ -8,9 +8,27 @@ class AuthController {
         $this->user = new User($db);
     }
 
+    private function ensureCsrfToken() {
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+    }
+
+    private function validateCsrfToken($token) {
+        return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    }
+
     public function register() {
+        $this->ensureCsrfToken();
+
         if ($_SERVER["REQUEST_METHOD"] !== "POST") {
             return $this->renderView('auth/register');
+        }
+
+        if (!$this->validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            $_SESSION['error'] = 'Invalid request';
+            header("Location: /register");
+            exit();
         }
 
         $username = htmlspecialchars(strip_tags($_POST['username']));
@@ -21,18 +39,26 @@ class AuthController {
 
         if (isset($result['error'])) {
             $_SESSION['error'] = $result['error'];
-            header("Location: /register.php");
+            header("Location: /register");
             exit();
         }
 
         $_SESSION['success'] = $result['message'];
-        header("Location: /login.php");
+        header("Location: /login");
         exit();
     }
 
     public function login() {
+        $this->ensureCsrfToken();
+
         if ($_SERVER["REQUEST_METHOD"] !== "POST") {
             return $this->renderView('auth/login');
+        }
+
+        if (!$this->validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            $_SESSION['error'] = 'Invalid request';
+            header("Location: /login");
+            exit();
         }
 
         $email = htmlspecialchars(strip_tags($_POST['email']));
@@ -42,18 +68,19 @@ class AuthController {
 
         if (isset($result['error'])) {
             $_SESSION['error'] = $result['error'];
-            header("Location: /login.php");
+            header("Location: /login");
             exit();
         }
 
         $_SESSION['user'] = $result['user'];
-        header("Location: /dashboard.php");
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // Nouveau token après connexion
+        header("Location: /dashboard");
         exit();
     }
 
     public function logout() {
         session_destroy();
-        header("Location: /login.php");
+        header("Location: /login");
         exit();
     }
 
@@ -66,13 +93,108 @@ class AuthController {
             $_SESSION['error'] = "Invalid or expired verification token.";
         }
         
-        header("Location: /login.php");
+        header("Location: /login");
         exit();
     }
 
-    private function renderView($view, $data = []) {
-        extract($data);
-        require_once __DIR__ . "/../views/$view.php";
+    public function forgotPassword() {
+        $this->ensureCsrfToken();
+
+        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+            return $this->renderView('auth/forgot-password');
+        }
+
+        if (!$this->validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            $_SESSION['error'] = 'Invalid request';
+            header("Location: /forgot-password");
+            exit();
+        }
+    
+        try {
+            $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+            error_log("Attempting password reset for email: " . $email);
+    
+            if (empty($email)) {
+                $_SESSION['error'] = "Email is required";
+                header("Location: /forgot-password");
+                exit();
+            }
+    
+            if (!$this->user) {
+                $_SESSION['error'] = "Database connection error";
+                header("Location: /forgot-password");
+                exit();
+            }
+    
+            $result = $this->user->initiatePasswordReset($email);
+    
+            if (isset($result['error'])) {
+                $_SESSION['error'] = $result['error'];
+                header("Location: /forgot-password");
+                exit();
+            }
+    
+            $_SESSION['success'] = $result['message'];
+            header("Location: /login");
+            exit();
+    
+        } catch (Exception $e) {
+            error_log("Exception in forgotPassword: " . $e->getMessage());
+            $_SESSION['error'] = "An error occurred during password reset";
+            header("Location: /forgot-password");
+            exit();
+        }
+    }
+
+    public function resetPassword() {
+        $this->ensureCsrfToken();
+
+        if ($_SERVER["REQUEST_METHOD"] === "GET") {
+            $token = htmlspecialchars(strip_tags($_GET['token']));
+            
+            if (!$this->user->validateResetToken($token)) {
+                $_SESSION['error'] = "Invalid or expired reset token";
+                header("Location: /login");
+                exit();
+            }
+            
+            return $this->renderView('auth/reset-password', ['token' => $token]);
+        }
+
+        if ($_SERVER["REQUEST_METHOD"] === "POST") {
+            if (!$this->validateCsrfToken($_POST['csrf_token'] ?? '')) {
+                $_SESSION['error'] = 'Invalid request';
+                header("Location: /reset-password?token=" . $_POST['token']);
+                exit();
+            }
+
+            $token = htmlspecialchars(strip_tags($_POST['token']));
+            $password = $_POST['password'];
+            
+            $result = $this->user->resetPassword($token, $password);
+
+            if (isset($result['error'])) {
+                $_SESSION['error'] = $result['error'];
+                header("Location: /reset-password?token=" . $token);
+                exit();
+            }
+
+            $_SESSION['success'] = $result['message'];
+            header("Location: /login");
+            exit();
+        }
+    }
+
+    public function showProfile() {
+        if (!isset($_SESSION['user'])) {
+            header('Location: /login');
+            exit();
+        }
+
+        $this->ensureCsrfToken();
+        $userData = $this->user->getUserById($_SESSION['user']['id']);
+        
+        return $this->renderView('profile', ['user' => $userData]);
     }
 
     public function updateProfile() {
@@ -80,8 +202,14 @@ class AuthController {
             header('Location: /login');
             exit();
         }
-    
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!$this->validateCsrfToken($_POST['csrf_token'] ?? '')) {
+                $_SESSION['error'] = 'Invalid request';
+                header('Location: /profile');
+                exit();
+            }
+
             $data = [
                 'username' => htmlspecialchars(strip_tags($_POST['username'])),
                 'email' => !empty($_POST['email']) ? htmlspecialchars(strip_tags($_POST['email'])) : null,
@@ -102,94 +230,8 @@ class AuthController {
         exit();
     }
 
-    public function forgotPassword() {
-        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-            return $this->renderView('auth/forgot-password');
-        }
-    
-        try {
-            $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-            error_log("Tentative de réinitialisation de mot de passe pour l'email : " . $email);
-    
-            // Vérification de l'email
-            if (empty($email)) {
-                error_log("Email vide");
-                $_SESSION['error'] = "L'email est requis";
-                header("Location: /forgot-password.php");
-                exit();
-            }
-    
-            // Vérification de la connexion à la base de données
-            if (!$this->user) {
-                error_log("Pas de connexion à la base de données");
-                $_SESSION['error'] = "Erreur de connexion à la base de données";
-                header("Location: /forgot-password.php");
-                exit();
-            }
-    
-            $result = $this->user->initiatePasswordReset($email);
-            error_log("Résultat de initiatePasswordReset : " . print_r($result, true));
-    
-            if (isset($result['error'])) {
-                error_log("Erreur lors de la réinitialisation : " . $result['error']);
-                $_SESSION['error'] = $result['error'];
-                header("Location: /forgot-password.php");
-                exit();
-            }
-    
-            $_SESSION['success'] = $result['message'];
-            header("Location: /login.php");
-            exit();
-    
-        } catch (Exception $e) {
-            error_log("Exception dans forgotPassword : " . $e->getMessage());
-            error_log("Stack trace : " . $e->getTraceAsString());
-            $_SESSION['error'] = "Une erreur est survenue lors de la réinitialisation du mot de passe";
-            header("Location: /forgot-password.php");
-            exit();
-        }
+    private function renderView($view, $data = []) {
+        extract($data);
+        require_once __DIR__ . "/../views/$view.php";
     }
-
-public function resetPassword() {
-    if ($_SERVER["REQUEST_METHOD"] === "GET") {
-        $token = htmlspecialchars(strip_tags($_GET['token']));
-        
-        if (!$this->user->validateResetToken($token)) {
-            $_SESSION['error'] = "Invalid or expired reset token";
-            header("Location: /login.php");
-            exit();
-        }
-        
-        return $this->renderView('auth/reset-password', ['token' => $token]);
-    }
-
-    if ($_SERVER["REQUEST_METHOD"] === "POST") {
-        $token = htmlspecialchars(strip_tags($_POST['token']));
-        $password = $_POST['password'];
-        
-        $result = $this->user->resetPassword($token, $password);
-
-        if (isset($result['error'])) {
-            $_SESSION['error'] = $result['error'];
-            header("Location: /reset-password.php?token=" . $token);
-            exit();
-        }
-
-        $_SESSION['success'] = $result['message'];
-        header("Location: /login.php");
-        exit();
-    }
-}
-
-public function showProfile() {
-    if (!isset($_SESSION['user'])) {
-        header('Location: /login');
-        exit();
-    }
-
-    // Récupérer les informations complètes de l'utilisateur
-    $userData = $this->user->getUserById($_SESSION['user']['id']);
-    
-    return $this->renderView('profile', ['user' => $userData]);
-}
 }

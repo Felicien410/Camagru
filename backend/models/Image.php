@@ -66,20 +66,39 @@ class Image {
     
     public function deleteImage($imageId, $userId) {
         try {
-            // Vérifier que l'utilisateur est propriétaire de l'image
-            $query = "DELETE FROM " . $this->table . " 
-                    WHERE id = :id AND user_id = :user_id";
-                    
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(":id", $imageId);
-            $stmt->bindParam(":user_id", $userId);
+            $this->conn->beginTransaction();
             
-            return $stmt->execute();
+            // Supprimer les likes associés
+            $queryLikes = "DELETE FROM likes WHERE image_id = :image_id";
+            $stmtLikes = $this->conn->prepare($queryLikes);
+            $stmtLikes->bindParam(":image_id", $imageId);
+            $stmtLikes->execute();
+            
+            // Supprimer les commentaires associés
+            $queryComments = "DELETE FROM comments WHERE image_id = :image_id";
+            $stmtComments = $this->conn->prepare($queryComments);
+            $stmtComments->bindParam(":image_id", $imageId);
+            $stmtComments->execute();
+            
+            // Supprimer l'image
+            $queryImage = "DELETE FROM " . $this->table . " 
+                          WHERE id = :id AND user_id = :user_id";
+            $stmtImage = $this->conn->prepare($queryImage);
+            $stmtImage->bindParam(":id", $imageId);
+            $stmtImage->bindParam(":user_id", $userId);
+            
+            $result = $stmtImage->execute();
+            
+            $this->conn->commit();
+            return $result;
+            
         } catch (PDOException $e) {
+            $this->conn->rollBack();
             error_log("Database error in Image::deleteImage: " . $e->getMessage());
             return false;
         }
     }
+    
     
     public function getTotalImages() {
         $query = "SELECT COUNT(*) FROM " . $this->table;
@@ -105,6 +124,24 @@ class Image {
             return $result;
         } catch (PDOException $e) {
             error_log("Error in getImageById: " . $e->getMessage());
+            return null;
+        }
+    }
+    public function getImagePath($imageId, $userId) {
+        try {
+            $query = "SELECT image_path FROM " . $this->table . " 
+                     WHERE id = :id AND user_id = :user_id";
+                     
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":id", $imageId);
+            $stmt->bindParam(":user_id", $userId);
+            $stmt->execute();
+            
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ? $result['image_path'] : null;
+            
+        } catch (PDOException $e) {
+            error_log("Database error in Image::getImagePath: " . $e->getMessage());
             return null;
         }
     }

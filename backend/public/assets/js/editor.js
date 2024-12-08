@@ -1,4 +1,3 @@
-//editor 
 // Elements DOM
 const video = document.getElementById('webcam');
 const canvas = document.getElementById('canvas');
@@ -8,20 +7,16 @@ const captureButton = document.getElementById('capture');
 const validatePhotoButton = document.getElementById('validatePhoto');
 const cancelPhotoButton = document.getElementById('cancelPhoto');
 const imageUpload = document.getElementById('imageUpload');
+const uploadLabel = document.querySelector('label[for="imageUpload"]');
 
 // Variables globales
 let selectedSticker = null;
 let animationFrame;
+let isUsingCamera = false;
 
 // Fonction pour réinitialiser l'état
 function resetState() {
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
-    }
-    if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-    }
+    stopCamera();
     
     // Réinitialiser le canvas
     const ctx = previewCanvas.getContext('2d');
@@ -33,10 +28,22 @@ function resetState() {
     validatePhotoButton.disabled = true;
     cancelPhotoButton.disabled = true;
     imageUpload.value = '';
+    uploadLabel.classList.remove('disabled');
     
     // Enlever la sélection du sticker
     selectedSticker = null;
     document.querySelectorAll('.sticker').forEach(s => s.classList.remove('selected'));
+}
+
+function stopCamera() {
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+    if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+    }
+    isUsingCamera = false;
 }
 
 function drawPreview() {
@@ -61,6 +68,7 @@ function drawPreview() {
 // Event Listeners
 startButton.addEventListener('click', async () => {
     try {
+        stopCamera(); // Arrêter la caméra précédente si elle était active
         const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
                 width: { ideal: 640 },
@@ -69,12 +77,14 @@ startButton.addEventListener('click', async () => {
         });
         video.srcObject = stream;
         await video.play();
+        isUsingCamera = true;
         startButton.disabled = true;
         captureButton.disabled = false;
         drawPreview();
     } catch (err) {
         console.error('Error:', err);
         alert('Could not access camera: ' + err.message);
+        resetState();
     }
 });
 
@@ -83,6 +93,11 @@ document.querySelectorAll('.sticker').forEach(sticker => {
         document.querySelectorAll('.sticker').forEach(s => s.classList.remove('selected'));
         sticker.classList.add('selected');
         selectedSticker = sticker.dataset.sticker;
+        
+        // Activer le bouton de capture si la caméra est active
+        if (isUsingCamera) {
+            captureButton.disabled = false;
+        }
     });
 });
 
@@ -99,17 +114,10 @@ captureButton.addEventListener('click', () => {
 imageUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
-        // Arrêter la webcam si active
-        if (video.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
-            video.srcObject = null;
-            cancelAnimationFrame(animationFrame);
-        }
-        
+        stopCamera(); // Arrêter la caméra si elle est active
+        startButton.disabled = false;
         captureButton.disabled = true;
-        validatePhotoButton.disabled = false;
-        cancelPhotoButton.disabled = false;
-
+        
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = new Image();
@@ -143,8 +151,14 @@ imageUpload.addEventListener('change', (e) => {
                 }
 
                 updatePreview();
+                validatePhotoButton.disabled = !selectedSticker;
+                cancelPhotoButton.disabled = false;
+
                 document.querySelectorAll('.sticker').forEach(sticker => {
-                    sticker.addEventListener('click', updatePreview);
+                    sticker.addEventListener('click', () => {
+                        updatePreview();
+                        validatePhotoButton.disabled = false;
+                    });
                 });
             };
             img.src = e.target.result;
@@ -198,7 +212,22 @@ async function uploadImage(imageData) {
 async function refreshPhotosList() {
     try {
         const response = await fetch('/editor/photos');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new TypeError("Expected JSON response, got " + contentType);
+        }
+
         const photos = await response.json();
+        
+        if (!Array.isArray(photos)) {
+            throw new TypeError("Expected array of photos, got " + typeof photos);
+        }
+
         const photosList = document.getElementById('photosList');
         photosList.innerHTML = photos.map(photo => `
             <div class="photo-item">
@@ -207,7 +236,6 @@ async function refreshPhotosList() {
             </div>
         `).join('');
 
-        // Ajouter les event listeners pour les boutons de suppression
         document.querySelectorAll('.delete-photo').forEach(button => {
             button.addEventListener('click', async () => {
                 if (confirm('Are you sure you want to delete this photo?')) {
@@ -216,7 +244,10 @@ async function refreshPhotosList() {
             });
         });
     } catch (err) {
-        console.error('Error refreshing photos:', err);
+        console.error('Error details:', err);
+        console.error('Error refreshing photos:', err.message);
+        const photosList = document.getElementById('photosList');
+        photosList.innerHTML = '<div class="error">Error loading photos</div>';
     }
 }
 

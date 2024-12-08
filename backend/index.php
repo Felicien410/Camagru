@@ -100,6 +100,11 @@ switch ($request) {
         $commentController->getComments($matches[1]);
         break;
 
+    case '/editor/delete':
+        $editorController = new EditorController();
+        $editorController->deletePhoto();
+        break;    
+        
     default:
         http_response_code(404);
         require __DIR__ . '/views/404.php';

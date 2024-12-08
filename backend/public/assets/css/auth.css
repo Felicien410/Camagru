@@ -1,0 +1,259 @@
+:root {
+    --primary-color: #0095f6;
+    --error-color: #ed4956;
+    --success-color: #2ecc71;
+    --background-color: #000;
+    --border-color: #dbdbdb;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--background-color);
+    line-height: 1.5;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+}
+
+/* On s'assure que le formulaire sera au-dessus des étoiles filantes */
+.container {
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    position: relative;
+    z-index: 10; /* Le formulaire au-dessus */
+}
+
+@media (max-width: 480px) {
+    .container {
+      margin: 0 auto;
+      padding: 15px;
+    }
+}
+
+.form {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 149, 246, 0.2);
+}
+
+.btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-color);
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.2s;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: #0081d6;
+}
+
+.alert {
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.alert-error {
+    background-color: rgba(237, 73, 86, 0.2);
+    border: 1px solid #fdb2b9;
+    color: var(--error-color);
+}
+
+.alert-success {
+    background-color: rgba(46, 204, 113, 0.2);
+    border: 1px solid #b6e6d0;
+    color: var(--success-color);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 24px;
+    color: #fff;
+}
+
+@media (max-width: 480px) {
+    h1 {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+}
+
+.text-center {
+    text-align: center;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+small {
+    display: block;
+    color: #b3b3b3;
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+.btn + .btn {
+    margin-top: 12px;
+}
+
+@media (max-width: 480px) {
+    .form {
+      padding: 15px;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-control {
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    .btn {
+      padding: 10px;
+    }
+}
+
+@media (max-width: 320px) {
+    body {
+      font-size: 14px;
+    }
+
+    .form-control {
+      font-size: 14px;
+    }
+}
+
+/* Étoiles statiques */
+.stars {
+    width: 1px;
+    height: 1px;
+    background-color: #fff;
+    position: absolute;
+    animation: twinkle 5s infinite linear;
+}
+
+@keyframes twinkle {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
+}
+
+/* Conteneur pour les étoiles filantes derrière le formulaire */
+.shooting-stars-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1; /* Derrière le formulaire */
+}
+
+/* Étoiles filantes orientées vers le bas-droite (45° environ) */
+.shooting-star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    box-shadow: 0 0 6px #fff;
+    opacity: 0;
+    /* On pivote l'étoile et la traînée pour correspondre à la direction du mouvement diagonal */
+    transform: rotate(45deg);
+}
+
+.shooting-star::before {
+    content: '';
+    position: absolute;
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(to right, rgba(255,255,255,0), #fff);
+    /* La traînée est alignée avec l'étoile via la rotation parent */
+    left: -100px; /* la traînée derrière l'étoile */
+    top: 0;
+    opacity: 0.8;
+}
+
+@keyframes shoot {
+    0% {
+        opacity: 1;
+        transform: translate(0,0) rotate(45deg);
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(100vw, 100vh) rotate(45deg);
+    }
+}
+
+/* On crée des étoiles filantes avec vars pour varier leur apparition */
+.shooting-star {
+    animation: shoot var(--shoot-duration, 3s) linear infinite;
+    animation-delay: var(--shoot-delay, 0s);
+    top: var(--shoot-top, 10%);
+    left: var(--shoot-left, 10%);
+}

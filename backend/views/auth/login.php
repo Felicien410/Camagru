@@ -12,6 +12,14 @@ header('X-Content-Type-Options: nosniff');
     <link rel="stylesheet" href="/public/assets/css/auth.css">
 </head>
 <body>
+<div class="shooting-stars-container">
+    <!-- Vous pouvez dupliquer autant de lignes que vous voulez -->
+    <div class="shooting-star" style="--shoot-top: 10%; --shoot-left: 5%; --shoot-duration:4s; --shoot-delay:1s;"></div>
+    <div class="shooting-star" style="--shoot-top: 20%; --shoot-left: 15%; --shoot-duration:5s; --shoot-delay:2s;"></div>
+    <div class="shooting-star" style="--shoot-top: 30%; --shoot-left: 2%; --shoot-duration:4.5s; --shoot-delay:3s;"></div>
+    <div class="shooting-star" style="--shoot-top: 40%; --shoot-left: 10%; --shoot-duration:6s; --shoot-delay:4s;"></div>
+    <div class="shooting-star" style="--shoot-top: 50%; --shoot-left: 1%; --shoot-duration:5s; --shoot-delay:5s;"></div>
+</div>
     <div class="container">
         <h1>Login</h1>
         
