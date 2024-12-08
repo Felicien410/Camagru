@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <title>404 - Lost in Space</title>
+    <link rel="stylesheet" href="/public/assets/css/style.css">
 </head>
 <body>
+    <div class="stars"></div>
     <div class="container">
-        <h1>404 - Page Not Found</h1>
-        <p>The page you're looking for doesn't exist.</p>
-        <a href="/" class="btn">Return Home</a>
+        <div class="error-404">
+            <h1>404</h1>
+            <p>Lost in the cosmic void. This planet doesn't exist.</p>
+            <a href="/" class="btn">Return to Earth</a>
+        </div>
     </div>
 </body>
 </html>

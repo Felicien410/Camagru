@@ -11,24 +11,27 @@ if (!isset($_SESSION['user'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Editor - Camagru</title>
     <link rel="stylesheet" href="/public/assets/css/style.css">
-    </head>
+    <link rel="stylesheet" href="/public/assets/css/editor.css">
+</head>
 <body>
+    <div class="stars"></div>
     <?php require_once __DIR__ . '/partials/header.php'; ?>
     
     <main class="container">
         <h1>Photo Editor</h1>
         
-            <div class="editor-container">
-                <div class="webcam-container">
-                    <video id="webcam" autoplay playsinline></video>
-                    <canvas id="previewCanvas"></canvas>
-                    <canvas id="canvas" style="display: none;"></canvas>
-                    <div class="button-group">
-                        <button id="startCamera" class="btn">Start Camera</button>
-                        <button id="capture" class="btn" disabled>Take Photo</button>
-                        <input type="file" id="imageUpload" accept="image/*" class="btn">
-                        <button id="validatePhoto" class="btn" disabled>Validate & Save</button>
-                        <button id="cancelPhoto" class="btn btn-danger" disabled>Cancel</button>
+        <div class="editor-container">
+            <div class="webcam-container">
+                <video id="webcam" autoplay playsinline></video>
+                <canvas id="previewCanvas"></canvas>
+                <canvas id="canvas" style="display: none;"></canvas>
+                <div class="button-group">
+                    <button id="startCamera" class="btn">Start Camera</button>
+                    <button id="capture" class="btn" disabled>Take Photo</button>
+                    <label for="imageUpload" class="btn">Upload Photo</label>
+                    <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                    <button id="validatePhoto" class="btn" disabled>Validate & Save</button>
+                    <button id="cancelPhoto" class="btn btn-danger" disabled>Cancel</button>
                 </div>
             </div>
             
@@ -48,5 +51,5 @@ if (!isset($_SESSION['user'])) {
     </main>
 
     <script src="/public/assets/js/editor.js"></script>
-    </body>
+</body>
 </html>

@@ -13,6 +13,7 @@ if (!isset($_SESSION['user'])) {
     <link rel="stylesheet" href="/public/assets/css/style.css">
 </head>
 <body>
+    <div class="stars"></div>
     <?php require_once __DIR__ . '/partials/header.php'; ?>
     
     <div class="container">
@@ -20,8 +21,6 @@ if (!isset($_SESSION['user'])) {
         
         <div class="dashboard-menu">
             <a href="/editor" class="btn">Create New Photo</a>
-            <a href="/gallery" class="btn">View Gallery</a>
-            <a href="/profile" class="btn">Edit Profile</a>
         </div>
     </div>
 </body>

@@ -3,6 +3,13 @@
         <div class="logo">
             <a href="/">Camagru</a>
         </div>
+        
+        <button class="hamburger" aria-label="Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
         <div class="nav-links">
             <?php if (isset($_SESSION['user'])): ?>
                 <a href="/dashboard">Dashboard</a>
@@ -18,3 +25,21 @@
         </div>
     </nav>
 </header>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+
+    hamburger.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+    });
+
+    // Fermer le menu en cliquant ailleurs
+    document.addEventListener('click', (e) => {
+        if (!hamburger.contains(e.target) && !navLinks.contains(e.target)) {
+            navLinks.classList.remove('active');
+        }
+    });
+});
+</script>
