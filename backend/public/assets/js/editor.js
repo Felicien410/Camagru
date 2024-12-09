@@ -9,20 +9,87 @@ const cancelPhotoButton = document.getElementById('cancelPhoto');
 const imageUpload = document.getElementById('imageUpload');
 const uploadLabel = document.querySelector('label[for="imageUpload"]');
 
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
+
 // Variables globales
 let selectedSticker = null;
 let animationFrame;
 let isUsingCamera = false;
+let currentImage = null;
 
-// Fonction pour réinitialiser l'état
+// Initialiser les dimensions du canvas
+previewCanvas.width = CANVAS_WIDTH;
+previewCanvas.height = CANVAS_HEIGHT;
+
+function calculateImagePosition(srcWidth, srcHeight) {
+    const srcRatio = srcWidth / srcHeight;
+    const canvasRatio = CANVAS_WIDTH / CANVAS_HEIGHT;
+    let drawWidth, drawHeight, x, y;
+
+    if (srcRatio > canvasRatio) {
+        drawWidth = CANVAS_WIDTH;
+        drawHeight = CANVAS_WIDTH / srcRatio;
+        x = 0;
+        y = (CANVAS_HEIGHT - drawHeight) / 2;
+    } else {
+        drawHeight = CANVAS_HEIGHT;
+        drawWidth = CANVAS_HEIGHT * srcRatio;
+        x = (CANVAS_WIDTH - drawWidth) / 2;
+        y = 0;
+    }
+
+    return { x, y, width: drawWidth, height: drawHeight };
+}
+
+function updateCanvas() {
+    const ctx = previewCanvas.getContext('2d');
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    if (isUsingCamera && video.videoWidth) {
+        // Dessiner la vidéo
+        const { x, y, width, height } = calculateImagePosition(video.videoWidth, video.videoHeight);
+        ctx.drawImage(video, x, y, width, height);
+    } else if (currentImage) {
+        // Dessiner l'image uploadée
+        const { x, y, width, height } = calculateImagePosition(currentImage.width, currentImage.height);
+        ctx.drawImage(currentImage, x, y, width, height);
+    }
+
+    // Dessiner le sticker sélectionné
+    if (selectedSticker) {
+        const sticker = document.querySelector(`[data-sticker="${selectedSticker}"]`);
+        if (sticker) {
+            if (selectedSticker === 'logo') {
+                const logoWidth = CANVAS_WIDTH * 0.10;
+                const logoHeight = (sticker.height * logoWidth) / sticker.width;
+                const logoX = CANVAS_WIDTH * 0.75;
+                const logoY = CANVAS_HEIGHT - logoHeight - (CANVAS_HEIGHT * 0.08);
+                
+                ctx.drawImage(sticker, logoX, logoY, logoWidth, logoHeight);
+            } else {
+                const stickerWidth = CANVAS_WIDTH * 0.3;
+                const stickerHeight = (sticker.height * stickerWidth) / sticker.width;
+                const stickerX = (CANVAS_WIDTH - stickerWidth) / 2;
+                const stickerY = (CANVAS_HEIGHT - stickerHeight) / 2;
+                
+                ctx.drawImage(sticker, stickerX, stickerY, stickerWidth, stickerHeight);
+            }
+        }
+    }
+
+    if (isUsingCamera) {
+        animationFrame = requestAnimationFrame(updateCanvas);
+    }
+}
+
 function resetState() {
     stopCamera();
+    currentImage = null;
     
-    // Réinitialiser le canvas
     const ctx = previewCanvas.getContext('2d');
-    ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     
-    // Réinitialiser les boutons
     startButton.disabled = false;
     captureButton.disabled = true;
     validatePhotoButton.disabled = true;
@@ -30,7 +97,6 @@ function resetState() {
     imageUpload.value = '';
     uploadLabel.classList.remove('disabled');
     
-    // Enlever la sélection du sticker
     selectedSticker = null;
     document.querySelectorAll('.sticker').forEach(s => s.classList.remove('selected'));
 }
@@ -46,33 +112,15 @@ function stopCamera() {
     isUsingCamera = false;
 }
 
-function drawPreview() {
-    if (!video.videoWidth) return;
-
-    previewCanvas.width = video.videoWidth;
-    previewCanvas.height = video.videoHeight;
-    const ctx = previewCanvas.getContext('2d');
-
-    ctx.drawImage(video, 0, 0);
-
-    if (selectedSticker) {
-        const sticker = document.querySelector(`[data-sticker="${selectedSticker}"]`);
-        const x = (previewCanvas.width - sticker.width) / 2;
-        const y = (previewCanvas.height - sticker.height) / 2;
-        ctx.drawImage(sticker, x, y);
-    }
-
-    animationFrame = requestAnimationFrame(drawPreview);
-}
-
 // Event Listeners
 startButton.addEventListener('click', async () => {
     try {
-        stopCamera(); // Arrêter la caméra précédente si elle était active
+        stopCamera();
+        currentImage = null;
         const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
-                width: { ideal: 640 },
-                height: { ideal: 480 }
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
             } 
         });
         video.srcObject = stream;
@@ -80,7 +128,7 @@ startButton.addEventListener('click', async () => {
         isUsingCamera = true;
         startButton.disabled = true;
         captureButton.disabled = false;
-        drawPreview();
+        updateCanvas();
     } catch (err) {
         console.error('Error:', err);
         alert('Could not access camera: ' + err.message);
@@ -94,10 +142,12 @@ document.querySelectorAll('.sticker').forEach(sticker => {
         sticker.classList.add('selected');
         selectedSticker = sticker.dataset.sticker;
         
-        // Activer le bouton de capture si la caméra est active
-        if (isUsingCamera) {
+        if (isUsingCamera || currentImage) {
             captureButton.disabled = false;
+            validatePhotoButton.disabled = false;
         }
+        
+        updateCanvas();
     });
 });
 
@@ -114,7 +164,7 @@ captureButton.addEventListener('click', () => {
 imageUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
-        stopCamera(); // Arrêter la caméra si elle est active
+        stopCamera();
         startButton.disabled = false;
         captureButton.disabled = true;
         
@@ -122,44 +172,10 @@ imageUpload.addEventListener('change', (e) => {
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-                previewCanvas.width = 640;
-                previewCanvas.height = 480;
-                const ctx = previewCanvas.getContext('2d');
-                
-                const scale = Math.min(
-                    previewCanvas.width / img.width,
-                    previewCanvas.height / img.height
-                );
-                
-                const x = (previewCanvas.width - img.width * scale) / 2;
-                const y = (previewCanvas.height - img.height * scale) / 2;
-                
-                function updatePreview() {
-                    ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-                    ctx.drawImage(
-                        img,
-                        x, y,
-                        img.width * scale,
-                        img.height * scale
-                    );
-                    if (selectedSticker) {
-                        const sticker = document.querySelector(`[data-sticker="${selectedSticker}"]`);
-                        const stickerX = (previewCanvas.width - sticker.width) / 2;
-                        const stickerY = (previewCanvas.height - sticker.height) / 2;
-                        ctx.drawImage(sticker, stickerX, stickerY);
-                    }
-                }
-
-                updatePreview();
+                currentImage = img;
+                updateCanvas();
                 validatePhotoButton.disabled = !selectedSticker;
                 cancelPhotoButton.disabled = false;
-
-                document.querySelectorAll('.sticker').forEach(sticker => {
-                    sticker.addEventListener('click', () => {
-                        updatePreview();
-                        validatePhotoButton.disabled = false;
-                    });
-                });
             };
             img.src = e.target.result;
         };
@@ -180,7 +196,6 @@ validatePhotoButton.addEventListener('click', () => {
 
 cancelPhotoButton.addEventListener('click', resetState);
 
-// API Functions
 async function uploadImage(imageData) {
     try {
         const response = await fetch('/editor/capture', {

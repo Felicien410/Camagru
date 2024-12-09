@@ -19,7 +19,7 @@ class EditorController {
         try {
             // Créer l'image depuis les données reçues
 
-            if (!preg_match('#^data:image/(jpeg|png|gif);base64,#i', $data['image'])) {
+            if (!preg_match('#^data:image/(jpeg|png|jpg|gif);base64,#i', $data['image'])) {
                 echo json_encode(['error' => 'Invalid image format']);
                 exit;
             }

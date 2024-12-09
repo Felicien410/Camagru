@@ -81,5 +81,6 @@ header('X-Content-Type-Options: nosniff');
         }
     });
     </script>
-</body>
+    <?php require_once __DIR__ . '/partials/footer.php'; ?>
+    </body>
 </html>
