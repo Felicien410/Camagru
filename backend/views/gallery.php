@@ -8,91 +8,78 @@
     <link rel="stylesheet" href="/public/assets/css/gallery.css">
 </head>
 <body>
+    <?php
+    function generateImageHtml($image) {
+        return sprintf('
+            <div class="gallery-item">
+                <img src="%s" alt="Gallery image">
+                <div class="image-info">
+                    <div class="username">By %s</div>
+                    <div class="image-date">%s</div>
+                    <div class="like-section">
+                        <button class="like-btn %s"
+                                data-image-id="%s">
+                            ❤️ <span class="like-count">%s</span>
+                        </button>
+                        <div class="comments-section">
+                            <button class="comment-toggle-btn" onclick="toggleComments(%s)">
+                                💬 <span class="comment-count">%s</span>
+                            </button>
+                            
+                            <div id="comments-%s" class="comments-container" style="display: none;">
+                                <div class="comments-list"></div>
+                                <form class="comment-form" onsubmit="addComment(event, %s)">
+                                    <input type="text" placeholder="Add a comment..." required>
+                                    <button type="submit">Send</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ',
+            htmlspecialchars($image['image_path']),
+            htmlspecialchars($image['username']),
+            htmlspecialchars($image['created_at_formatted']),
+            $image['user_has_liked'] ? 'liked' : '',
+            htmlspecialchars($image['id']),
+            htmlspecialchars($image['like_count']),
+            htmlspecialchars($image['id']),
+            htmlspecialchars($image['comment_count']),
+            htmlspecialchars($image['id']),
+            htmlspecialchars($image['id'])
+        );
+    }
+    ?>
+
     <?php require_once __DIR__ . '/partials/header.php'; ?>
 
     <div class="container">
         <h1>Public Gallery</h1>
         
-        <div class="gallery-grid">
+        <div class="gallery-grid" id="gallery-container">
             <?php foreach ($images as $image): ?>
-                <div class="gallery-item">
-                    <img src="<?php echo htmlspecialchars($image['image_path']); ?>" alt="Gallery image">
-                    <div class="image-info">
-                        <div class="username">By <?php echo htmlspecialchars($image['username']); ?></div>
-                        <div class="image-date"><?php echo date('F j, Y', strtotime($image['created_at'])); ?></div>
-                        <div class="like-section">
-                            <button class="like-btn <?php echo $image['user_has_liked'] ? 'liked' : ''; ?>"
-                                    data-image-id="<?php echo $image['id']; ?>">
-                                ❤️ <span class="like-count"><?php echo $image['like_count']; ?></span>
-                            </button>
-                            <div class="comments-section">
-                                <button class="comment-toggle-btn" onclick="toggleComments(<?php echo $image['id']; ?>)">
-                                    💬 <span class="comment-count"><?php echo $image['comment_count']; ?></span>
-                                </button>
-                                
-                                <div id="comments-<?php echo $image['id']; ?>" class="comments-container" style="display: none;">
-                                    <div class="comments-list"></div>
-                                    <form class="comment-form" onsubmit="addComment(event, <?php echo $image['id']; ?>)">
-                                        <input type="text" placeholder="Add a comment..." required>
-                                        <button type="submit">Send</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <?php echo generateImageHtml($image); ?>
             <?php endforeach; ?>
         </div>
-
-        <div class="pagination">
-            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                <a href="?page=<?php echo $i; ?>" 
-                   class="<?php echo $page === $i ? 'active' : ''; ?>">
-                    <?php echo $i; ?>
-                </a>
-            <?php endfor; ?>
+        
+        <div id="loading-spinner" style="display: none;" class="text-center p-4">
+            Loading more images...
         </div>
     </div>
     <script>
-document.querySelectorAll('.like-btn').forEach(button => {
-    button.addEventListener('click', async () => {
-        console.log('Like button clicked');
-        const imageId = button.dataset.imageId;
-        console.log('Image ID:', imageId);
-        
-        try {
-            console.log('Sending request to /like/toggle');
-            const response = await fetch('/like/toggle', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ imageId: imageId })
-            });
+// Variables globales pour le chargement infini
+let currentPage = 1;
+let isLoading = false;
+let hasMore = true;
+let loadingDebounce = null;
 
-            const data = await response.json();
-            console.log('Response:', data);
-            
-            if (data.success) {
-                console.log('Like successful');
-                button.classList.toggle('liked');
-                const countSpan = button.querySelector('.like-count');
-                countSpan.textContent = data.likeCount;
-            } else {
-                console.error('Error:', data.error);
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    });
-});
-</script>
-<script>
-async function toggleComments(imageId) {
+// Gestion des commentaires (définir avant l'utilisation dans le HTML)
+function toggleComments(imageId) {
     const container = document.getElementById(`comments-${imageId}`);
     if (container.style.display === 'none') {
         container.style.display = 'block';
-        await loadComments(imageId);
+        loadComments(imageId);
     } else {
         container.style.display = 'none';
     }
@@ -116,19 +103,14 @@ async function loadComments(imageId) {
         console.error('Error loading comments:', error);
     }
 }
+
 async function addComment(event, imageId) {
     event.preventDefault();
     const form = event.target;
     const input = form.querySelector('input');
     const content = input.value.trim();
 
-    console.log('Attempting to add comment:', {
-        imageId,
-        content
-    });
-
     try {
-        console.log('Sending request to /comments/add');
         const response = await fetch('/comments/add', {
             method: 'POST',
             headers: {
@@ -137,19 +119,7 @@ async function addComment(event, imageId) {
             body: JSON.stringify({ imageId, content })
         });
 
-        console.log('Response status:', response.status);
-        console.log('Response headers:', [...response.headers.entries()]);
-
-        const responseText = await response.text();
-        console.log('Raw response:', responseText);
-
-        let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (e) {
-            console.error('JSON parse error:', e);
-            throw new Error('Invalid JSON response: ' + responseText);
-        }
+        const data = await response.json();
 
         if (data.success) {
             input.value = '';
@@ -161,10 +131,161 @@ async function addComment(event, imageId) {
             throw new Error(data.error || 'Failed to add comment');
         }
     } catch (error) {
-        console.error('Detailed error:', error);
+        console.error('Error adding comment:', error);
         alert(error.message || 'Failed to add comment. Please try again.');
     }
 }
+
+// Gestion des likes
+async function handleLikeClick(event) {
+    const button = event.currentTarget;
+    const imageId = button.dataset.imageId;
+    
+    try {
+        const response = await fetch('/like/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ imageId: imageId })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            button.classList.toggle('liked');
+            const countSpan = button.querySelector('.like-count');
+            countSpan.textContent = data.likeCount;
+        } else {
+            throw new Error(data.error || 'Failed to toggle like');
+        }
+    } catch (error) {
+        console.error('Error toggling like:', error);
+        alert('Failed to update like. Please try again.');
+    }
+}
+
+function initializeLikeButtons() {
+    document.querySelectorAll('.like-btn:not([data-initialized])').forEach(button => {
+        button.setAttribute('data-initialized', 'true');
+        button.addEventListener('click', handleLikeClick);
+    });
+}
+
+// Gestion du chargement infini
+function generateImageHtml(image) {
+    return `
+        <div class="gallery-item">
+            <img src="${image.image_path}" alt="Gallery image">
+            <div class="image-info">
+                <div class="username">By ${image.username}</div>
+                <div class="image-date">${image.created_at_formatted}</div>
+                <div class="like-section">
+                    <button class="like-btn ${image.user_has_liked ? 'liked' : ''}"
+                            data-image-id="${image.id}">
+                        ❤️ <span class="like-count">${image.like_count}</span>
+                    </button>
+                    <div class="comments-section">
+                        <button class="comment-toggle-btn" onclick="toggleComments(${image.id})">
+                            💬 <span class="comment-count">${image.comment_count}</span>
+                        </button>
+                        
+                        <div id="comments-${image.id}" class="comments-container" style="display: none;">
+                            <div class="comments-list"></div>
+                            <form class="comment-form" onsubmit="addComment(event, ${image.id})">
+                                <input type="text" placeholder="Add a comment..." required>
+                                <button type="submit">Send</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function loadMoreImages() {
+    if (isLoading || !hasMore) {
+        console.log('Skipping load - isLoading:', isLoading, 'hasMore:', hasMore);
+        return;
+    }
+    
+    try {
+        isLoading = true;
+        document.getElementById('loading-spinner').style.display = 'block';
+        console.log('Loading more images, current page:', currentPage);
+        
+        const response = await fetch(`/gallery/load-more?page=${currentPage + 1}`);
+        const data = await response.json();
+        console.log('Received data:', data);
+        
+        if (data.success) {
+            if (data.images && data.images.length > 0) {
+                const container = document.getElementById('gallery-container');
+                data.images.forEach(image => {
+                    container.insertAdjacentHTML('beforeend', generateImageHtml(image));
+                });
+                
+                initializeLikeButtons();
+                currentPage++;
+                hasMore = data.hasMore;
+                
+                console.log('Updated state:', {
+                    currentPage,
+                    hasMore,
+                    totalImages: data.totalImages,
+                    loadedImagesCount: data.images.length
+                });
+            } else {
+                hasMore = false;
+                console.log('No more images available');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading more images:', error);
+    } finally {
+        isLoading = false;
+        document.getElementById('loading-spinner').style.display = 'none';
+    }
+}
+
+// Initialisation de l'Intersection Observer
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Initializing infinite scroll');
+    
+    const options = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !isLoading) {
+                console.log('Loading triggered by intersection');
+                loadMoreImages();
+            }
+        });
+    }, options);
+
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) {
+        observer.observe(spinner);
+        console.log('Observer attached to spinner');
+    }
+
+    // Backup scroll event
+    window.addEventListener('scroll', () => {
+        const scrollPosition = window.innerHeight + window.pageYOffset;
+        const totalHeight = document.documentElement.scrollHeight;
+        
+        if (totalHeight - scrollPosition < 1000 && !isLoading && hasMore) {
+            console.log('Loading triggered by scroll');
+            loadMoreImages();
+        }
+    });
+
+    // Initialize initial content
+    initializeLikeButtons();
+});
 </script>
-</body>
-</html>

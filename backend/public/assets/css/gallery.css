@@ -220,3 +220,9 @@
 .like-btn:active {
     animation: likeAnimation 0.3s ease;
 }
+
+#loading-spinner {
+    text-align: center;
+    padding: 20px;
+    margin: 20px 0;
+}

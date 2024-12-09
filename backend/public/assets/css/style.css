@@ -410,4 +410,23 @@ input[type="file"]::before {
         font-size: 1.5em;
         margin-bottom: 15px;
     }
+
+    .logo img {
+        height: 40px;
+        width: auto;
+        vertical-align: middle;
+        max-width: 100%; /* Ajoute cette ligne */
+    }
+    
+    .logo a {
+        display: inline-block;
+        text-decoration: none;
+    }
+    
+    /* Ajoutez ces règles pour plus de contrôle */
+    .logo {
+        display: flex;
+        align-items: center;
+    }
 }
+

@@ -75,6 +75,10 @@ switch ($request) {
         $galleryController->index();
         break;
 
+    case '/gallery/load-more':
+        $galleryController->loadMoreImages();
+        break;
+        
     case (preg_match('/^\/verify\.php\?token=/', $request) ? true : false):
         $controller->verify();
         break;

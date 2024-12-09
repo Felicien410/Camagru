@@ -1,10 +1,17 @@
 <?php
 class Database {
-   private $host = "db";
-   private $db_name = "camagru";
-   private $username = "root";
-   private $password = "root"; 
+   private $host;
+   private $db_name;
+   private $username;
+   private $password;
    private $conn;
+
+   public function __construct() {
+       $this->host = getenv('DB_HOST');
+       $this->db_name = getenv('DB_NAME');
+       $this->username = getenv('DB_USER');
+       $this->password = getenv('DB_PASSWORD');
+   }
 
    public function getConnection() {
        $this->conn = null;
