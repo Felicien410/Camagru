@@ -20,7 +20,7 @@ class GalleryController {
             $hasMore = $totalImages > $this->imagesPerPage;
             require_once __DIR__ . '/../views/gallery.php';
         } catch (Exception $e) {
-            error_log("Error in gallery: " . $e->getMessage());
+            //error_log("Error in gallery: " . $e->getMessage());
             header('Location: /404.php');
         }
     }
@@ -28,15 +28,15 @@ class GalleryController {
     public function loadMoreImages() {
         try {
             $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-            error_log("Loading page: " . $page);
+            //error_log("Loading page: " . $page);
             
             $images = $this->loadImages($page);
             $totalImages = $this->image->getTotalImages();
             $hasMore = ($page * $this->imagesPerPage) < $totalImages;
             
-            error_log("Total images: " . $totalImages);
-            error_log("Current offset: " . (($page - 1) * $this->imagesPerPage));
-            error_log("Has more: " . ($hasMore ? "true" : "false"));
+            //error_log("Total images: " . $totalImages);
+            //error_log("Current offset: " . (($page - 1) * $this->imagesPerPage));
+            //error_log("Has more: " . ($hasMore ? "true" : "false"));
             
             header('Content-Type: application/json');
             echo json_encode([
@@ -53,7 +53,7 @@ class GalleryController {
                 ]
             ]);
         } catch (Exception $e) {
-            error_log("Error in loadMoreImages: " . $e->getMessage());
+            //error_log("Error in loadMoreImages: " . $e->getMessage());
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => false,
@@ -64,10 +64,10 @@ class GalleryController {
 
     private function loadImages($page) {
         $offset = ($page - 1) * $this->imagesPerPage;
-        error_log("Loading images with offset: " . $offset . " and limit: " . $this->imagesPerPage);
+        //error_log("Loading images with offset: " . $offset . " and limit: " . $this->imagesPerPage);
         
         $images = $this->image->getAllImages($this->imagesPerPage, $offset);
-        error_log("Loaded " . count($images) . " images");
+        //error_log("Loaded " . count($images) . " images");
         
         foreach ($images as &$image) {
             $image['like_count'] = $this->like->getLikeCount($image['id']);

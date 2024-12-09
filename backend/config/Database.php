@@ -32,11 +32,11 @@ class Database {
            } catch(PDOException $e) {
                $retries--;
                if ($retries <= 0) {
-                   error_log("Connection error: " . $e->getMessage());
+                   //error_log("Connection error: " . $e->getMessage());
                    echo "Connection error: " . $e->getMessage();
                    return null;
                }
-               error_log("Failed to connect, retrying in {$delay} seconds...");
+               //error_log("Failed to connect, retrying in {$delay} seconds...");
                sleep($delay);
            }
        }

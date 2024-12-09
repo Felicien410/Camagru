@@ -112,7 +112,7 @@ class AuthController {
     
         try {
             $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-            error_log("Attempting password reset for email: " . $email);
+            //error_log("Attempting password reset for email: " . $email);
     
             if (empty($email)) {
                 $_SESSION['error'] = "Email is required";
@@ -139,7 +139,7 @@ class AuthController {
             exit();
     
         } catch (Exception $e) {
-            error_log("Exception in forgotPassword: " . $e->getMessage());
+            //error_log("Exception in forgotPassword: " . $e->getMessage());
             $_SESSION['error'] = "An error occurred during password reset";
             header("Location: /forgot-password");
             exit();

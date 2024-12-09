@@ -24,7 +24,7 @@ public function addComment() {
 
         // Récupération et validation des données
         $data = json_decode(file_get_contents('php://input'), true);
-        error_log("Received data: " . json_encode($data));
+        //error_log("Received data: " . json_encode($data));
 
         if (!isset($data['imageId']) || !isset($data['content']) || empty(trim($data['content']))) {
             echo json_encode(['error' => 'Missing required data']);
@@ -48,34 +48,34 @@ public function addComment() {
         if ($result) {
             // Gestion des notifications
             if ($imageInfo['user_id'] != $_SESSION['user']['id']) {
-                error_log("Different users - checking notifications");
+                //error_log("Different users - checking notifications");
                 $imageOwner = $this->user->getUserById($imageInfo['user_id']);
-                error_log("Image owner: " . json_encode($imageOwner));
+                //error_log("Image owner: " . json_encode($imageOwner));
 
                 if ($imageOwner && isset($imageOwner['notifications_enabled'])) {
-                    error_log("Notifications status: " . ($imageOwner['notifications_enabled'] ? 'enabled' : 'disabled'));
+                    //error_log("Notifications status: " . ($imageOwner['notifications_enabled'] ? 'enabled' : 'disabled'));
                     
                     if ($imageOwner['notifications_enabled']) {
                         try {
-                            error_log("Attempting to send notification to " . $imageOwner['email']);
-                            error_log("For image path: " . $imageInfo['image_path']);
+                            //error_log("Attempting to send notification to " . $imageOwner['email']);
+                            //error_log("For image path: " . $imageInfo['image_path']);
                             
                             $notificationResult = $this->user->sendCommentNotification(
                                 $imageOwner['email'],
                                 $imageInfo['image_path']
                             );
-                            error_log("Notification send result: " . ($notificationResult ? 'success' : 'failed'));
+                            //error_log("Notification send result: " . ($notificationResult ? 'success' : 'failed'));
                         } catch (Exception $e) {
-                            error_log("Notification error: " . $e->getMessage());
+                            //error_log("Notification error: " . $e->getMessage());
                         }
                     } else {
-                        error_log("User has notifications disabled");
+                        //error_log("User has notifications disabled");
                     }
                 } else {
-                    error_log("User preferences not found");
+                    //error_log("User preferences not found");
                 }
             } else {
-                error_log("Self-comment - no notification needed");
+                //error_log("Self-comment - no notification needed");
             }
 
             // Retour des commentaires mis à jour
@@ -85,11 +85,11 @@ public function addComment() {
                 'comments' => $comments
             ]);
         } else {
-            error_log("Failed to create comment");
+            //error_log("Failed to create comment");
             echo json_encode(['error' => 'Failed to add comment']);
         }
     } catch (Exception $e) {
-        error_log("Error in addComment: " . $e->getMessage());
+        //error_log("Error in addComment: " . $e->getMessage());
         echo json_encode(['error' => 'Server error']);
     }
     exit;
@@ -105,7 +105,7 @@ public function addComment() {
                 'comments' => $comments
             ]);
         } catch (Exception $e) {
-            error_log("Error in getComments: " . $e->getMessage());
+            //error_log("Error in getComments: " . $e->getMessage());
             echo json_encode(['error' => 'Server error']);
         }
         exit;

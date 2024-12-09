@@ -7,6 +7,7 @@ class Image {
         $this->conn = $db;
     }
     
+    //Récupère une liste d'images avec des données enrichies 
     public function getAllImages($limit = 5, $offset = 0) {
         $query = "SELECT i.*, u.username,
                   (SELECT COUNT(*) FROM comments WHERE image_id = i.id) as comment_count,
@@ -25,7 +26,7 @@ class Image {
     }
 
 
-    
+    //Ajoute une nouvelle image associée à un utilisateur dans la base.
     public function create($userId, $imagePath, $description = '') {
         try {
             $query = "INSERT INTO " . $this->table . " 
@@ -40,11 +41,12 @@ class Image {
             
             return $stmt->execute();
         } catch (PDOException $e) {
-            error_log("Database error in Image::create: " . $e->getMessage());
+            //error_log("Database error in Image::create: " . $e->getMessage());
             return false;
         }
     }
     
+    //Récupère toutes les images pour un utilisateur spécifique.
     public function getUserImages($userId, $limit = 12) {
         try {
             $query = "SELECT * FROM " . $this->table . " 
@@ -59,11 +61,12 @@ class Image {
             
             return $stmt->fetchAll();
         } catch (PDOException $e) {
-            error_log("Database error in Image::getUserImages: " . $e->getMessage());
+            //error_log("Database error in Image::getUserImages: " . $e->getMessage());
             return [];
         }
     }
     
+    //Supprime une image et ses données associées (likes, commentaires).
     public function deleteImage($imageId, $userId) {
         try {
             $this->conn->beginTransaction();
@@ -94,12 +97,12 @@ class Image {
             
         } catch (PDOException $e) {
             $this->conn->rollBack();
-            error_log("Database error in Image::deleteImage: " . $e->getMessage());
+            //error_log("Database error in Image::deleteImage: " . $e->getMessage());
             return false;
         }
     }
     
-    
+    //Retourne le nombre total d'images dans la base.
     public function getTotalImages() {
         $query = "SELECT COUNT(*) FROM " . $this->table;
         $stmt = $this->conn->prepare($query);
@@ -108,9 +111,10 @@ class Image {
         return $stmt->fetchColumn();
     }
 
+    //Récupère les détails d'une image spécifique, incluant l'email de son propriétaire.
     public function getImageById($imageId) {
         try {
-            error_log("Getting image with ID: " . $imageId);
+            //error_log("Getting image with ID: " . $imageId);
             $query = "SELECT i.*, u.email FROM " . $this->table . " i
                       JOIN users u ON i.user_id = u.id
                       WHERE i.id = :id";
@@ -120,13 +124,15 @@ class Image {
             $stmt->execute();
             
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            error_log("Image info found: " . json_encode($result));
+            //error_log("Image info found: " . json_encode($result));
             return $result;
         } catch (PDOException $e) {
-            error_log("Error in getImageById: " . $e->getMessage());
+            //error_log("Error in getImageById: " . $e->getMessage());
             return null;
         }
     }
+
+    //Récupère le chemin d'une image pour un utilisateur donné.
     public function getImagePath($imageId, $userId) {
         try {
             $query = "SELECT image_path FROM " . $this->table . " 
@@ -141,7 +147,7 @@ class Image {
             return $result ? $result['image_path'] : null;
             
         } catch (PDOException $e) {
-            error_log("Database error in Image::getImagePath: " . $e->getMessage());
+            //error_log("Database error in Image::getImagePath: " . $e->getMessage());
             return null;
         }
     }

@@ -40,7 +40,7 @@ class EditorController {
                 throw new Exception('Failed to save to database');
             }
         } catch (Exception $e) {
-            error_log("Error in capture: " . $e->getMessage());
+            //error_log("Error in capture: " . $e->getMessage());
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
@@ -73,7 +73,7 @@ class EditorController {
                 throw new Exception('Failed to delete image');
             }
         } catch (Exception $e) {
-            error_log("Error deleting image: " . $e->getMessage());
+            //error_log("Error deleting image: " . $e->getMessage());
             echo json_encode(['error' => 'Failed to delete image']);
         }
     }
@@ -89,7 +89,7 @@ class EditorController {
             $photos = $this->image->getUserImages($_SESSION['user']['id'], $limit);
             echo json_encode($photos);
         } catch (Exception $e) {
-            error_log("Error getting photos: " . $e->getMessage());
+            //error_log("Error getting photos: " . $e->getMessage());
             echo json_encode(['error' => $e->getMessage()]);
         }
         exit;

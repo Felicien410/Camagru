@@ -88,6 +88,7 @@ class User {
         return ['error' => 'Invalid credentials'];
     }
 
+    //Vérifier les règles de validation pour les entrées utilisateur.
     private function validateInput($username, $email, $password) {
         if (strlen($username) < 3 || strlen($username) > 50) {
             return false;
@@ -132,14 +133,14 @@ class User {
             );
     
             if (mail($to, $subject, $message, $headers)) {
-                error_log("Verification email sent successfully to: " . $to);
+                //error_log("Verification email sent successfully to: " . $to);
                 return true;
             } else {
-                error_log("Failed to send verification email to: " . $to);
+                //error_log("Failed to send verification email to: " . $to);
                 return false;
             }
         } catch (Exception $e) {
-            error_log("Error sending verification email: " . $e->getMessage());
+            //error_log("Error sending verification email: " . $e->getMessage());
             return false;
         }
     }
@@ -213,7 +214,7 @@ public function updateNotificationSettings($userId, $notify) {
         
         return $stmt->execute();
     } catch(PDOException $e) {
-        error_log("Error updating notification settings: " . $e->getMessage());
+        //error_log("Error updating notification settings: " . $e->getMessage());
         return false;
     }
 }
@@ -230,16 +231,16 @@ public function getUserById($userId) {
         
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        error_log("Error in getUserById: " . $e->getMessage());
+        //error_log("Error in getUserById: " . $e->getMessage());
         return null;
     }
 }
 
 public function sendCommentNotification($email, $imagePath) {
     try {
-        error_log("Attempting to send notification");
-        error_log("Email: " . $email);
-        error_log("Image path: " . $imagePath);
+        //error_log("Attempting to send notification");
+        //error_log("Email: " . $email);
+        //error_log("Image path: " . $imagePath);
         
         $to = $email;
         $subject = "New Comment on Your Camagru Photo";
@@ -249,7 +250,7 @@ public function sendCommentNotification($email, $imagePath) {
         $message .= "View the photo here: http://localhost:8080" . $imagePath . "\n\n";
         $message .= "Best regards,\nCamagru Team";
         
-        error_log("Full message: " . $message);
+        //error_log("Full message: " . $message);
         
         $headers = array(
             'From' => 'noreply@camagru.com',
@@ -257,34 +258,35 @@ public function sendCommentNotification($email, $imagePath) {
         );
 
         $mailResult = mail($to, $subject, $message, $headers);
-        error_log("Mail function returned: " . ($mailResult ? "true" : "false"));
+        //error_log("Mail function returned: " . ($mailResult ? "true" : "false"));
         return $mailResult;
     } catch (Exception $e) {
-        error_log("Error sending comment notification: " . $e->getMessage());
+        //error_log("Error sending comment notification: " . $e->getMessage());
         return false;
     }
 }
 
+//Initie une demande de réinitialisation de mot de passe.
 public function initiatePasswordReset($email) {
     try {
-        error_log("Début de initiatePasswordReset pour : " . $email);
+        //error_log("Début de initiatePasswordReset pour : " . $email);
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            error_log("Email invalide");
+            //error_log("Email invalide");
             return ['error' => 'Adresse email invalide'];
         }
 
         $query = "SELECT id FROM " . $this->table . " WHERE email = :email AND is_verified = true";
-        error_log("Requête SQL : " . $query);
+        //error_log("Requête SQL : " . $query);
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':email', $email);
         $stmt->execute();
         
-        error_log("Nombre de résultats : " . $stmt->rowCount());
+        //error_log("Nombre de résultats : " . $stmt->rowCount());
 
         if ($stmt->rowCount() === 0) {
-            error_log("Aucun compte vérifié trouvé pour cet email");
+            //error_log("Aucun compte vérifié trouvé pour cet email");
             return ['error' => 'Aucun compte vérifié trouvé avec cette adresse email'];
         }
 
@@ -312,7 +314,7 @@ public function initiatePasswordReset($email) {
 
         return ['error' => 'Unable to process password reset request'];
     } catch (Exception $e) {
-        error_log("Password reset initiation error: " . $e->getMessage());
+        //error_log("Password reset initiation error: " . $e->getMessage());
         return ['error' => 'An error occurred during password reset initiation'];
     }
 }
@@ -336,14 +338,14 @@ private function sendPasswordResetEmail($email, $token) {
         );
 
         if (mail($to, $subject, $message, $headers)) {
-            error_log("Password reset email sent successfully to: " . $to);
+            //error_log("Password reset email sent successfully to: " . $to);
             return true;
         } else {
-            error_log("Failed to send password reset email to: " . $to);
+            //error_log("Failed to send password reset email to: " . $to);
             return false;
         }
     } catch (Exception $e) {
-        error_log("Error sending password reset email: " . $e->getMessage());
+        //error_log("Error sending password reset email: " . $e->getMessage());
         return false;
     }
 }
@@ -360,7 +362,7 @@ public function validateResetToken($token) {
         
         return $stmt->rowCount() > 0;
     } catch (Exception $e) {
-        error_log("Token validation error: " . $e->getMessage());
+        //error_log("Token validation error: " . $e->getMessage());
         return false;
     }
 }
@@ -404,7 +406,7 @@ public function resetPassword($token, $new_password) {
 
         return ['error' => 'Unable to reset password'];
     } catch (Exception $e) {
-        error_log("Password reset error: " . $e->getMessage());
+        //error_log("Password reset error: " . $e->getMessage());
         return ['error' => 'An error occurred while resetting password'];
     }
 }

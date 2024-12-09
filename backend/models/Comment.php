@@ -15,17 +15,17 @@ class Comment {
             $content = htmlspecialchars(strip_tags($content), ENT_QUOTES, 'UTF-8');
     
             if (!$userId || !$imageId || empty($content)) {
-                error_log("Invalid input parameters");
+                //error_log("Invalid input parameters");
                 return false;
             }
     
             // Vérifier la longueur du contenu
             if (strlen($content) > 500) { // ajustez la limite selon vos besoins
-                error_log("Comment content too long");
+                //error_log("Comment content too long");
                 return false;
             }
     
-            error_log("Attempting to create comment with userId: $userId, imageId: $imageId");
+            //error_log("Attempting to create comment with userId: $userId, imageId: $imageId");
     
             $this->conn->beginTransaction();
             
@@ -60,23 +60,25 @@ class Comment {
                 $result = $stmt->execute();
                 $this->conn->commit();
                 
-                error_log("Comment creation result: " . ($result ? "success" : "failed"));
+                //error_log("Comment creation result: " . ($result ? "success" : "failed"));
                 return $result;
                 
             } catch (Exception $e) {
                 $this->conn->rollBack();
-                error_log("Error in transaction: " . $e->getMessage());
+                //error_log("Error in transaction: " . $e->getMessage());
                 return false;
             }
     
         } catch (PDOException $e) {
-            error_log("Error creating comment: " . $e->getMessage());
+            //error_log("Error creating comment: " . $e->getMessage());
             return false;
         }
     }
+
+    //Récupérer tous les commentaires associés à une image, avec les noms des utilisateurs.
     public function getImageComments($imageId) {
         try {
-            error_log("Getting comments for image: $imageId");
+            //error_log("Getting comments for image: $imageId");
             
             $query = "SELECT c.*, u.username 
                      FROM " . $this->table . " c
@@ -89,11 +91,11 @@ class Comment {
             $stmt->execute();
 
             $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            error_log("Found " . count($comments) . " comments");
+            //error_log("Found " . count($comments) . " comments");
             return $comments;
 
         } catch (PDOException $e) {
-            error_log("Error getting comments: " . $e->getMessage());
+            //error_log("Error getting comments: " . $e->getMessage());
             return [];
         }
     }

@@ -14,7 +14,7 @@ class Like {
             $imageId = filter_var($imageId, FILTER_VALIDATE_INT);
     
             if (!$userId || !$imageId) {
-                error_log("Invalid user_id or image_id in toggleLike");
+                //error_log("Invalid user_id or image_id in toggleLike");
                 return false;
             }
     
@@ -60,12 +60,12 @@ class Like {
     
             } catch (Exception $e) {
                 $this->conn->rollBack();
-                error_log("Error in transaction: " . $e->getMessage());
+                //error_log("Error in transaction: " . $e->getMessage());
                 return false;
             }
     
         } catch (PDOException $e) {
-            error_log("Database error in toggleLike: " . $e->getMessage());
+            //error_log("Database error in toggleLike: " . $e->getMessage());
             return false;
         }
     }

@@ -118,7 +118,7 @@
                 `).join('');
             }
         } catch (error) {
-            console.error('Error loading comments:', error);
+            //console.error('Error loading comments:', error);
         }
     }
 
@@ -149,7 +149,7 @@
                 throw new Error(data.error || 'Failed to add comment');
             }
         } catch (error) {
-            console.error('Error adding comment:', error);
+            //console.error('Error adding comment:', error);
             alert(error.message || 'Failed to add comment. Please try again.');
         }
     }
@@ -178,7 +178,7 @@
                 throw new Error(data.error || 'Failed to toggle like');
             }
         } catch (error) {
-            console.error('Error toggling like:', error);
+            //console.error('Error toggling like:', error);
             alert('Failed to update like. Please try again.');
         }
     }
@@ -260,7 +260,7 @@
                 }
             }
         } catch (error) {
-            console.error('Error loading more images:', error);
+            //console.error('Error loading more images:', error);
         } finally {
             isLoading = false;
             document.getElementById('loading-spinner').style.display = 'none';
