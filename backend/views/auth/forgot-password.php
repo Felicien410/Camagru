@@ -10,6 +10,8 @@ header('X-Content-Type-Options: nosniff');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forgot Password - Camagru</title>
     <link rel="stylesheet" href="/public/assets/css/auth.css">
+    <link rel="icon" href="data:," />
+
 
 </head>
 <body>

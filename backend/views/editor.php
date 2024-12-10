@@ -12,13 +12,13 @@ if (!isset($_SESSION['user'])) {
     <title>Photo Editor - Camagru</title>
     <link rel="stylesheet" href="/public/assets/css/style.css">
     <link rel="stylesheet" href="/public/assets/css/editor.css">
+    <link rel="icon" href="data:," />
 </head>
 <body>
     <div class="stars"></div>
     <?php require_once __DIR__ . '/partials/header.php'; ?>
     
     <main class="container">
-        <!-- Section principale à gauche -->
         <div class="main-content">
             <h1>Photo Editor</h1>
             
@@ -48,7 +48,6 @@ if (!isset($_SESSION['user'])) {
             </div>
         </div>
 
-        <!-- Section latérale à droite -->
         <aside class="preview-section">
             <div class="preview-container">
                 <h3>Previous Photos</h3>

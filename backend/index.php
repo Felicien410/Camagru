@@ -5,7 +5,7 @@ require_once __DIR__ . '/config/Database.php';
 require_once __DIR__ . '/models/User.php';
 require_once __DIR__ . '/models/Image.php';
 require_once __DIR__ . '/models/Like.php';
-require_once __DIR__ . '/models/Comment.php';  // Ajout du model Comment
+require_once __DIR__ . '/models/Comment.php';  
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/GalleryController.php';
 require_once __DIR__ . '/controllers/LikeController.php';
@@ -50,7 +50,7 @@ switch ($request) {
 
 
     case '/profile':
-        $controller->showProfile();  // Au lieu de require __DIR__ . '/views/profile.php'
+        $controller->showProfile(); 
         break;
     
     case '/profile/update':

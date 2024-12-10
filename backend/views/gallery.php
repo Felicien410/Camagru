@@ -6,6 +6,7 @@
     <title>Gallery - Camagru</title>
     <link rel="stylesheet" href="/public/assets/css/style.css">
     <link rel="stylesheet" href="/public/assets/css/gallery.css">
+    <link rel="icon" href="data:," />
     <style>
         body {
             min-height: 100vh;

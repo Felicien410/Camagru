@@ -50,6 +50,8 @@
         <nav>
             <div class="left-section">
                 <div class="logo">
+                    <link rel="icon" href="data:," />
+
                     <a href="/"><img src="/public/images/logo.jpg" alt="Camagru Logo"></a>        
                 </div>
                 <?php if (isset($_SESSION['user'])): ?>
@@ -86,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
         navLinks.classList.toggle('active');
     });
 
-    // Fermer le menu en cliquant ailleurs
     document.addEventListener('click', (e) => {
         if (!hamburger.contains(e.target) && !navLinks.contains(e.target)) {
             navLinks.classList.remove('active');

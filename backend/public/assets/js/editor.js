@@ -12,15 +12,11 @@ const uploadLabel = document.querySelector('label[for="imageUpload"]');
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
 
-//id sticker
 let selectedSticker = null;
-//id de l animation
 let animationFrame;
 let isUsingCamera = false;
-// contient l objet image
 let currentImage = null;
 let capturedImage = null;
-
 
 // Initialiser les dimensions du canvas
 previewCanvas.width = CANVAS_WIDTH;
@@ -46,26 +42,18 @@ function calculateImagePosition(srcWidth, srcHeight) {
     return { x, y, width: drawWidth, height: drawHeight };
 }
 
-// Modifier updateCanvas pour gérer l'affichage
 function updateCanvas() {
     const ctx = previewCanvas.getContext('2d');
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    if (capturedImage) {
-        // Afficher l'image capturée
-        const { x, y, width, height } = calculateImagePosition(capturedImage.width, capturedImage.height);
-        ctx.drawImage(capturedImage, x, y, width, height);
-    } else if (isUsingCamera && video.videoWidth) {
-        // Afficher le flux vidéo
+    if (isUsingCamera && video.videoWidth) {
         const { x, y, width, height } = calculateImagePosition(video.videoWidth, video.videoHeight);
         ctx.drawImage(video, x, y, width, height);
     } else if (currentImage) {
-        // Afficher une image uploadée
         const { x, y, width, height } = calculateImagePosition(currentImage.width, currentImage.height);
         ctx.drawImage(currentImage, x, y, width, height);
     }
 
-    // Ajouter le sticker
     if (selectedSticker) {
         const sticker = document.querySelector(`[data-sticker="${selectedSticker}"]`);
         if (sticker) {
@@ -85,13 +73,11 @@ function updateCanvas() {
         }
     }
 
-    // Continuer l'animation seulement si la caméra est active et qu'il n'y a pas d'image capturée
-    if (isUsingCamera && !capturedImage) {
-        animationFrame = requestAnimationFrame(updateCanvas);
-    }
+    // Appeler l'update en continu, même sans caméra
+    animationFrame = requestAnimationFrame(updateCanvas);
 }
 
-//Réinitialise l'état de l'application
+
 function resetState() {
     stopCamera();
     currentImage = null;
@@ -101,6 +87,7 @@ function resetState() {
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     
     startButton.disabled = false;
+    captureButton.style.display = 'none'; // Cacher par défaut
     captureButton.disabled = true;
     validatePhotoButton.disabled = true;
     cancelPhotoButton.disabled = true;
@@ -122,6 +109,19 @@ function stopCamera() {
     isUsingCamera = false;
 }
 
+function updateButtonStates() {
+    // Gérer l'état des boutons en fonction du mode (caméra ou upload)
+    if (isUsingCamera) {
+        captureButton.style.display = ''; // Afficher
+        captureButton.disabled = !selectedSticker;
+        validatePhotoButton.disabled = true;
+    } else if (currentImage) {
+        captureButton.style.display = 'none'; // Cacher
+        validatePhotoButton.disabled = !selectedSticker;
+    }
+    cancelPhotoButton.disabled = !(currentImage || isUsingCamera);
+}
+
 // Event Listeners
 startButton.addEventListener('click', async () => {
     try {
@@ -137,56 +137,38 @@ startButton.addEventListener('click', async () => {
         await video.play();
         isUsingCamera = true;
         startButton.disabled = true;
-        captureButton.disabled = false;
+        updateButtonStates();
         updateCanvas();
     } catch (err) {
-        //console.error('Error:', err);
         alert('Could not access camera: ' + err.message);
         resetState();
     }
 });
 
-// Gestion de la sélection des stickers
 document.querySelectorAll('.sticker').forEach(sticker => {
     sticker.addEventListener('click', () => {
         document.querySelectorAll('.sticker').forEach(s => s.classList.remove('selected'));
         sticker.classList.add('selected');
         selectedSticker = sticker.dataset.sticker;
-        
-        // Activer le bouton de capture si une source d'image est disponible
-        if (isUsingCamera || currentImage) {
-            captureButton.disabled = false;
-        }
+        updateButtonStates();
+        updateCanvas();
     });
 });
 
-// Modification du bouton de capture
 captureButton.addEventListener('click', () => {
     if (!selectedSticker) {
         alert('Please select a sticker first');
         return;
     }
     
-    // Capturer l'état actuel du canvas
     capturedImage = new Image();
     capturedImage.onload = () => {
-        // Une fois l'image chargée
-        // Arrêter la caméra
         stopCamera();
-        
-        // Utiliser l'image capturée comme source courante
         currentImage = capturedImage;
-        
-        // Mettre à jour le canvas
+        updateButtonStates();
         updateCanvas();
-        
-        // Mettre à jour les boutons
-        captureButton.disabled = true;
-        validatePhotoButton.disabled = false;
-        cancelPhotoButton.disabled = false;
     };
     
-    // Déclencher le chargement de l'image
     capturedImage.src = previewCanvas.toDataURL('image/png');
 });
 
@@ -195,16 +177,15 @@ imageUpload.addEventListener('change', (e) => {
     if (file) {
         stopCamera();
         startButton.disabled = false;
-        captureButton.disabled = true;
         
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
                 currentImage = img;
+                updateButtonStates();
                 updateCanvas();
-                validatePhotoButton.disabled = !selectedSticker;
-                cancelPhotoButton.disabled = false;
+                uploadLabel.classList.add('disabled');
             };
             img.src = e.target.result;
         };
@@ -222,6 +203,7 @@ validatePhotoButton.addEventListener('click', () => {
         resetState();
     });
 });
+
 
 cancelPhotoButton.addEventListener('click', resetState);
 
@@ -247,11 +229,11 @@ async function uploadImage(imageData) {
             return false;
         }
     } catch (err) {
-        //console.error('Error:', err);
         alert('Error saving photo');
         return false;
     }
 }
+
 
 async function refreshPhotosList() {
     try {
@@ -276,10 +258,13 @@ async function refreshPhotosList() {
         photosList.innerHTML = photos.map(photo => `
             <div class="photo-item">
                 <img src="${photo.image_path}" alt="Photo">
-                <button class="btn btn-danger delete-photo" data-id="${photo.id}">Delete</button>
+                <div class="photo-actions">
+                    <button class="btn btn-danger delete-photo" data-id="${photo.id}">Delete</button>
+                </div>
             </div>
         `).join('');
 
+        // Event listeners pour la suppression
         document.querySelectorAll('.delete-photo').forEach(button => {
             button.addEventListener('click', async () => {
                 if (confirm('Are you sure you want to delete this photo?')) {
@@ -288,8 +273,6 @@ async function refreshPhotosList() {
             });
         });
     } catch (err) {
-        //console.error('Error details:', err);
-        //console.error('Error refreshing photos:', err.message);
         const photosList = document.getElementById('photosList');
         photosList.innerHTML = '<div class="error">Error loading photos</div>';
     }
@@ -312,10 +295,9 @@ async function deletePhoto(imageId) {
             alert('Error deleting photo: ' + data.error);
         }
     } catch (err) {
-        //console.error('Error:', err);
         alert('Error deleting photo');
     }
 }
 
-// Initial load
+// Appel initial
 refreshPhotosList();

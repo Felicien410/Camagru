@@ -6,6 +6,7 @@
     <title>Camagru - Home</title>
     <link rel="stylesheet" href="/public/assets/css/style.css">
     <link rel="stylesheet" href="/public/assets/css/home.css">
+    <link rel="icon" href="data:," />
 </head>
 <body>
     <div class="container">
@@ -23,7 +24,6 @@
             </div>
         <?php endif; ?>
         
-        <!-- Section d'explications sur Camagru -->
         <div class="explanation">
             <p>Camagru est une application web dédiée à la création et au partage de photos personnalisées. 
                Vous pouvez y ajouter des filtres, des stickers et bien d'autres effets artistiques. 
